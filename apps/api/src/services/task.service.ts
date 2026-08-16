@@ -4,6 +4,7 @@ import {
   CreateTaskInput,
   UpdateTaskInput,
   ReorderTasksInput,
+  ReorderItem,
   TaskQueryFilter,
   Task,
 } from '@taskly/shared-types';
@@ -139,7 +140,7 @@ export class TaskService {
   }
 
   static async reorderTasks(userId: string, input: ReorderTasksInput): Promise<Task[]> {
-    const bulkOps = input.tasks.map((item) => {
+    const bulkOps = input.tasks.map((item: ReorderItem) => {
       return {
         updateOne: {
           filter: {

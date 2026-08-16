@@ -19,7 +19,7 @@ jobs:
           node-version: 22
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run typecheck && pnpm run test && pnpm run build
+      - run: pnpm run build && pnpm run typecheck && pnpm run test
 
   deploy-web:
     name: Deploy Web App to Vercel
