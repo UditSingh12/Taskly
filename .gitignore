@@ -10,6 +10,7 @@ dist/
 build/
 .turbo/
 .vercel/
+*.tsbuildinfo
 
 # Environment Variables & Secrets (CRITICAL)
 .env
