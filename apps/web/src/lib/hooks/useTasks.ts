@@ -43,11 +43,11 @@ export function useTasks(initialFilter?: TaskQueryFilter) {
       priority: input.priority || 'medium',
       dueDate: input.dueDate ? new Date(input.dueDate) : null,
       tags: input.tags || [],
-      assigneeName: input.assigneeName || 'Admin',
-      assigneeAvatar: input.assigneeAvatar || '',
+      assignee: input.assigneeId ? { _id: input.assigneeId, name: 'Loading...', avatarColor: '#000' } : undefined,
       subtasks: input.subtasks || [],
       owner: 'temp',
       order: input.order !== undefined ? input.order : tasks.length,
+      activity: [],
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -66,16 +66,23 @@ export function useTasks(initialFilter?: TaskQueryFilter) {
     }
   };
 
-  const updateTask = async (id: string, input: UpdateTaskInput): Promise<Task> => {
-    const previousTasks = [...tasks];
-
+  const updateTask = async (id: string, updates: Partial<Task>) => {
     // Optimistic update
-    setTasks((prev) =>
-      prev.map((t) => (t._id === id ? { ...t, ...input, updatedAt: new Date() } : t))
-    );
-
+    const previousTasks = [...tasks];
+    
+    setTasks(tasks.map(t => {
+      if (t._id === id) {
+        return {
+          ...t,
+          ...updates,
+          // Handle specific nested/complex fields if necessary in optimistic update
+          assignee: updates.assignee !== undefined ? updates.assignee : t.assignee
+        };
+      }
+      return t;
+    }));
     try {
-      const res = await api.updateTask(id, input);
+      const res = await api.updateTask(id, updates as UpdateTaskInput);
       setTasks((prev) => prev.map((t) => (t._id === id ? res.task : t)));
       return res.task;
     } catch (err: any) {

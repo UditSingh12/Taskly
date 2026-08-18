@@ -4,6 +4,8 @@ import { Project as IProjectType } from '@taskly/shared-types';
 export interface IProjectDocument extends Omit<IProjectType, '_id' | 'owner' | 'taskCount' | 'completedTaskCount'>, Document {
   _id: mongoose.Types.ObjectId;
   owner: mongoose.Types.ObjectId;
+  members: mongoose.Types.ObjectId[];
+  pendingMembers: mongoose.Types.ObjectId[];
 }
 
 const ProjectSchema = new Schema<IProjectDocument>(
@@ -31,6 +33,14 @@ const ProjectSchema = new Schema<IProjectDocument>(
       required: true,
       index: true,
     },
+    members: [{
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    }],
+    pendingMembers: [{
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    }],
   },
   {
     timestamps: true,
@@ -38,6 +48,10 @@ const ProjectSchema = new Schema<IProjectDocument>(
       transform: (_doc, ret: any) => {
         ret._id = ret._id?.toString();
         ret.owner = ret.owner?.toString();
+        ret.memberIds = ret.members?.map((m: any) => m.toString()) || [];
+        ret.pendingMemberIds = ret.pendingMembers?.map((m: any) => m.toString()) || [];
+        delete ret.members;
+        delete ret.pendingMembers;
         return ret;
       },
     },

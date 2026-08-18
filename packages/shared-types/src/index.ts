@@ -7,29 +7,26 @@ import { z } from 'zod';
 export const ThemeEnum = z.enum(['light', 'dark']);
 export type Theme = z.infer<typeof ThemeEnum>;
 
+export const RoleEnum = z.enum(['admin', 'member']);
+export type Role = z.infer<typeof RoleEnum>;
+
+export const StatusEnum = z.enum(['invited', 'active', 'deactivated']);
+export type Status = z.infer<typeof StatusEnum>;
+
 export const UserSchema = z.object({
   _id: z.string(),
   name: z.string().min(1).max(50),
-  email: z.string().email().optional(),
-  isGuest: z.boolean().default(true),
+  email: z.string().email(),
+  role: RoleEnum.default('member'),
+  status: StatusEnum.default('active'),
   avatarColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Must be a valid hex color'),
   avatarUrl: z.string().optional(),
   theme: ThemeEnum.default('dark'),
+  lastActiveAt: z.coerce.date().optional(),
   createdAt: z.coerce.date().optional(),
+  jobTitle: z.string().max(100).optional(),
 });
 export type User = z.infer<typeof UserSchema>;
-
-export const CreateGuestUserSchema = z.object({
-  name: z.string().min(1).max(50).optional(),
-});
-export type CreateGuestUserInput = z.infer<typeof CreateGuestUserSchema>;
-
-export const RegisterUserSchema = z.object({
-  name: z.string().min(2, 'Username must be at least 2 characters').max(50),
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters long'),
-});
-export type RegisterUserInput = z.infer<typeof RegisterUserSchema>;
 
 export const LoginUserSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -37,13 +34,18 @@ export const LoginUserSchema = z.object({
 });
 export type LoginUserInput = z.infer<typeof LoginUserSchema>;
 
-export const GoogleAuthSchema = z.object({
-  email: z.string().email(),
-  name: z.string().min(1),
-  picture: z.string().optional(),
-  googleId: z.string().optional(),
+export const AdminInviteSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  name: z.string().min(1, 'Name is required'),
+  jobTitle: z.string().max(100).optional(),
 });
-export type GoogleAuthInput = z.infer<typeof GoogleAuthSchema>;
+export type AdminInviteInput = z.infer<typeof AdminInviteSchema>;
+
+export const AcceptInviteSchema = z.object({
+  token: z.string().min(1),
+  password: z.string().min(6, 'Password must be at least 6 characters long'),
+});
+export type AcceptInviteInput = z.infer<typeof AcceptInviteSchema>;
 
 export const UpdateThemeSchema = z.object({
   theme: ThemeEnum,
@@ -61,6 +63,8 @@ export const ProjectSchema = z.object({
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Must be a valid hex color').default('#4F46E5'),
   icon: z.string().default('folder'),
   owner: z.string(),
+  memberIds: z.array(z.string()).default([]),
+  pendingMemberIds: z.array(z.string()).default([]),
   taskCount: z.number().int().default(0),
   completedTaskCount: z.number().int().default(0),
   createdAt: z.coerce.date().optional(),
@@ -96,6 +100,15 @@ export const SubtaskSchema = z.object({
 });
 export type Subtask = z.infer<typeof SubtaskSchema>;
 
+export const TaskActivitySchema = z.object({
+  type: z.enum(['status_change', 'priority_change', 'assignee_change', 'created']),
+  actorId: z.string(),
+  fromValue: z.string().optional(),
+  toValue: z.string().optional(),
+  timestamp: z.coerce.date(),
+});
+export type TaskActivity = z.infer<typeof TaskActivitySchema>;
+
 export const TaskSchema = z.object({
   _id: z.string(),
   title: z.string().min(1, 'Title is required').max(200),
@@ -104,12 +117,12 @@ export const TaskSchema = z.object({
   priority: TaskPriorityEnum.default('medium'),
   dueDate: z.coerce.date().optional().nullable(),
   tags: z.array(z.string().max(30)).default([]),
-  assigneeName: z.string().max(50).optional(),
-  assigneeAvatar: z.string().optional(),
+  assignee: UserSchema.pick({ _id: true, name: true, avatarColor: true, avatarUrl: true }).optional().nullable(),
   subtasks: z.array(SubtaskSchema).default([]),
   projectId: z.string().optional().nullable(),
   owner: z.string(),
   order: z.number().int().default(0),
+  activity: z.array(TaskActivitySchema).default([]),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
 });
@@ -122,8 +135,7 @@ export const CreateTaskSchema = z.object({
   priority: TaskPriorityEnum.default('medium'),
   dueDate: z.coerce.date().optional().nullable(),
   tags: z.array(z.string().max(30)).optional(),
-  assigneeName: z.string().max(50).optional(),
-  assigneeAvatar: z.string().optional(),
+  assigneeId: z.string().optional().nullable(),
   subtasks: z.array(SubtaskSchema).optional(),
   projectId: z.string().optional().nullable(),
   order: z.number().int().optional(),
@@ -151,8 +163,39 @@ export const TaskQueryFilterSchema = z.object({
   search: z.string().optional(),
   tag: z.string().optional(),
   projectId: z.string().optional(),
+  assigneeId: z.string().optional(),
 });
 export type TaskQueryFilter = z.infer<typeof TaskQueryFilterSchema>;
+
+// ==========================================
+// Comment & Audit Log Types
+// ==========================================
+
+export const CommentSchema = z.object({
+  _id: z.string(),
+  taskId: z.string(),
+  author: UserSchema.pick({ _id: true, name: true, avatarColor: true, avatarUrl: true }),
+  body: z.string().min(1).max(2000),
+  createdAt: z.coerce.date(),
+});
+export type Comment = z.infer<typeof CommentSchema>;
+
+export const CreateCommentSchema = z.object({
+  body: z.string().min(1, "Comment cannot be empty").max(2000),
+});
+export type CreateCommentInput = z.infer<typeof CreateCommentSchema>;
+
+export const AdminAuditLogSchema = z.object({
+  _id: z.string(),
+  adminId: z.string(),
+  adminName: z.string(),
+  action: z.enum(['invite_sent', 'invite_revoked', 'member_deactivated', 'member_promoted', 'task_force_edited']),
+  targetType: z.enum(['user', 'task']),
+  targetId: z.string(),
+  timestamp: z.coerce.date(),
+  details: z.any().optional(),
+});
+export type AdminAuditLog = z.infer<typeof AdminAuditLogSchema>;
 
 // ==========================================
 // Active User / Real-time Presence Types
@@ -163,6 +206,7 @@ export interface ActiveUser {
   name: string;
   avatarColor: string;
   role: string;
+  jobTitle?: string;
   statusText: string;
   isCurrentUser?: boolean;
 }

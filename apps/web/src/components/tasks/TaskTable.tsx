@@ -142,12 +142,13 @@ export function TaskTable({
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <Avatar
-                              name={task.assigneeName || 'Admin'}
+                              name={task.assignee?.name || 'Unassigned'}
                               size="sm"
-                              color="#4F46E5"
+                              color={task.assignee?.avatarColor || '#94a3b8'}
+                              url={task.assignee?.avatarUrl}
                             />
                             <span className="text-xs text-muted-foreground truncate">
-                              {task.assigneeName || 'Admin'}
+                              {task.assignee?.name || 'Unassigned'}
                             </span>
                           </div>
                         </td>

@@ -4,7 +4,8 @@ import { cn } from '@/lib/utils';
 export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   name?: string;
   color?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  url?: string;
 }
 
 export function Avatar({
@@ -12,6 +13,7 @@ export function Avatar({
   color = '#4F46E5',
   size = 'md',
   className,
+  url,
   ...props
 }: AvatarProps) {
   const getInitials = (str: string) => {
@@ -26,6 +28,7 @@ export function Avatar({
     sm: 'h-6 w-6 text-[10px]',
     md: 'h-8 w-8 text-xs',
     lg: 'h-10 w-10 text-sm',
+    xl: 'h-16 w-16 text-2xl',
   };
 
   return (

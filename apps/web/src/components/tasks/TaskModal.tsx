@@ -18,6 +18,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Avatar } from '../ui/Avatar';
 import { formatFullDate, cn } from '@/lib/utils';
+import { useAuth } from '@/lib/hooks/useAuth';
 
 export interface TaskModalProps {
   isOpen: boolean;
@@ -40,19 +41,23 @@ export function TaskModal({
   onSave,
   onDelete,
 }: TaskModalProps) {
+  const { activeUsers } = useAuth();
   const [title, setTitle] = React.useState('');
   const [description, setDescription] = React.useState('');
   const [status, setStatus] = React.useState<TaskStatus>('todo');
   const [priority, setPriority] = React.useState<TaskPriority>('medium');
   const [projectId, setProjectId] = React.useState<string>('');
   const [dueDate, setDueDate] = React.useState('');
-  const [assigneeName, setAssigneeName] = React.useState('Admin');
+  const [assigneeId, setAssigneeId] = React.useState<string>('');
   const [tags, setTags] = React.useState<string[]>([]);
   const [tagInput, setTagInput] = React.useState('');
   const [subtasks, setSubtasks] = React.useState<Subtask[]>([]);
   const [subtaskInput, setSubtaskInput] = React.useState('');
+  const [comments, setComments] = React.useState<import('@taskly/shared-types').Comment[]>([]);
+  const [newComment, setNewComment] = React.useState('');
   const [isSaving, setIsSaving] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const [isSubmittingComment, setIsSubmittingComment] = React.useState(false);
 
   React.useEffect(() => {
     if (task) {
@@ -61,10 +66,13 @@ export function TaskModal({
       setStatus(task.status || 'todo');
       setPriority(task.priority || 'medium');
       setProjectId(task.projectId || '');
-      setAssigneeName(task.assigneeName || 'Admin');
+      setAssigneeId(task.assignee?._id || '');
       setDueDate(
         task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ''
       );
+      import('@/lib/api-client').then(({ api }) => {
+        api.getComments(task._id).then(res => setComments(res.comments)).catch(() => {});
+      });
       setTags(task.tags || []);
       setSubtasks(task.subtasks || []);
     } else {
@@ -73,7 +81,7 @@ export function TaskModal({
       setStatus(defaultStatus);
       setPriority('medium');
       setProjectId(defaultProjectId || (projects[0]?._id || ''));
-      setAssigneeName('Admin');
+      setAssigneeId('');
       setDueDate('');
       setTags(['Deployment']);
       setSubtasks([]);
@@ -114,6 +122,23 @@ export function TaskModal({
     setSubtasks(subtasks.filter((st) => st.id !== id));
   };
 
+  const handleCommentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim() || !task) return;
+
+    setIsSubmittingComment(true);
+    try {
+      const { api } = await import('@/lib/api-client');
+      const res = await api.createComment(task._id, { body: newComment.trim() });
+      setComments([...comments, res.comment]);
+      setNewComment('');
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
@@ -125,9 +150,9 @@ export function TaskModal({
         description: description.trim(),
         status,
         priority,
-        projectId: projectId ? projectId : null,
-        assigneeName,
-        dueDate: dueDate ? new Date(dueDate) : null,
+        projectId: projectId ? projectId : undefined,
+        assignee: assigneeId ? { _id: assigneeId, name: '', avatarColor: '' } as any : undefined,
+        dueDate: dueDate ? new Date(dueDate) : undefined,
         tags,
         subtasks,
       });
@@ -273,17 +298,20 @@ export function TaskModal({
               <span>Assignee</span>
             </div>
             <div className="flex items-center gap-2">
-              <Avatar name={assigneeName} size="sm" />
+              <Avatar 
+                name={activeUsers.find(u => u.id === assigneeId)?.name || 'Unassigned'} 
+                color={activeUsers.find(u => u.id === assigneeId)?.avatarColor}
+                size="sm" 
+              />
               <select
-                value={assigneeName}
-                onChange={(e) => setAssigneeName(e.target.value)}
+                value={assigneeId}
+                onChange={(e) => setAssigneeId(e.target.value)}
                 className="bg-card border border-border rounded-md px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
               >
-                <option value="Admin">Admin</option>
-                <option value="Dexter">Dexter</option>
-                <option value="QA Team">QA Team</option>
-                <option value="Designer">Designer</option>
-                <option value="Security">Security</option>
+                <option value="">Unassigned</option>
+                {activeUsers.map(u => (
+                  <option key={u.id} value={u.id}>{u.name} {u.jobTitle ? `— ${u.jobTitle}` : ''}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -421,6 +449,87 @@ export function TaskModal({
             </div>
           </div>
         </div>
+
+        {/* Activity Log */}
+        {task && task.activity && task.activity.length > 0 && (
+          <div className="space-y-3 pt-4 border-t border-border">
+            <label className="text-xs font-semibold text-muted-foreground flex items-center gap-2">
+              Activity Timeline
+            </label>
+            <div className="space-y-4 relative before:absolute before:inset-0 before:ml-4 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent pl-8 pt-2">
+              {task.activity.slice().reverse().map((act, i) => {
+                let text = '';
+                switch (act.type) {
+                  case 'created': text = 'created this task'; break;
+                  case 'status_change': text = `changed status to ${act.toValue?.replace('_', ' ')}`; break;
+                  case 'priority_change': text = `changed priority to ${act.toValue}`; break;
+                  case 'assignee_change': text = act.toValue ? `assigned to ${act.toValue}` : 'removed assignee'; break;
+                }
+                return (
+                  <div key={i} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full border border-white bg-secondary text-muted-foreground shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 absolute -left-4 -translate-x-1/2 md:static md:translate-x-0">
+                      <div className="h-2 w-2 rounded-full bg-accent"></div>
+                    </div>
+                    <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-card p-3 rounded border border-border/50 shadow-sm text-xs text-foreground">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-semibold">{act.actorId}</span>
+                        <span className="text-[10px] text-muted-foreground">{new Date(act.timestamp).toLocaleString()}</span>
+                      </div>
+                      <p className="text-muted-foreground">{text}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Comments Section */}
+        {task && (
+          <div className="space-y-4 pt-4 border-t border-border">
+            <label className="text-xs font-semibold text-muted-foreground flex items-center gap-2">
+              Comments ({comments.length})
+            </label>
+            <div className="space-y-3">
+              {comments.map((comment) => (
+                <div key={comment._id} className="flex gap-3">
+                  <Avatar name={comment.author.name} url={comment.author.avatarUrl} color={comment.author.avatarColor} size="sm" />
+                  <div className="flex-1 bg-secondary/30 rounded-lg p-3 text-sm text-foreground border border-border/50">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-semibold text-xs">{comment.author.name}</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {new Date(comment.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="whitespace-pre-wrap text-xs text-muted-foreground">{comment.body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2 items-start pt-2">
+              <Avatar name={activeUsers.find(u => u.isCurrentUser)?.name || 'Me'} size="sm" />
+              <div className="flex-1 flex flex-col gap-2">
+                <textarea
+                  placeholder="Add a comment..."
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleCommentSubmit(e as any);
+                    }
+                  }}
+                  className="w-full text-sm p-2 rounded border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent resize-none min-h-[60px]"
+                />
+                <div className="self-end">
+                  <Button type="button" onClick={handleCommentSubmit} size="sm" isLoading={isSubmittingComment} disabled={!newComment.trim()}>
+                    Comment
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Footer Actions */}
         <div className="flex items-center justify-between border-t border-border pt-4">

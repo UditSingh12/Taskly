@@ -125,7 +125,7 @@ export function Header({
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
                             <p className="text-xs font-medium text-foreground truncate">{u.name}</p>
-                            <span className="text-[10px] text-muted-foreground">{u.role}</span>
+                            <span className="text-[10px] text-muted-foreground capitalize">{u.jobTitle || u.role}</span>
                           </div>
                           <p className="text-[10px] text-muted-foreground truncate">{u.statusText}</p>
                         </div>
@@ -161,7 +161,7 @@ export function Header({
                   <div className="px-3 py-2 border-b border-border mb-1">
                     <p className="text-xs font-bold text-foreground truncate">{user?.name}</p>
                     <p className="text-[11px] text-muted-foreground truncate">
-                      {user?.isGuest ? 'Guest Session' : user?.email || 'Member'}
+                      {user?.jobTitle || 'Member'}
                     </p>
                   </div>
 

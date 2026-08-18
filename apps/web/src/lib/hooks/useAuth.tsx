@@ -1,19 +1,16 @@
 'use client';
 
 import * as React from 'react';
-import { User, ActiveUser, RegisterUserInput, LoginUserInput, GoogleAuthInput } from '@taskly/shared-types';
+import { User, ActiveUser, LoginUserInput } from '@taskly/shared-types';
 import { api } from '../api-client';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   activeUsers: ActiveUser[];
-  loginAsGuest: (name?: string) => Promise<User>;
-  register: (input: RegisterUserInput) => Promise<User>;
   login: (input: LoginUserInput) => Promise<User>;
-  loginWithGoogle: (input: GoogleAuthInput) => Promise<User>;
   logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
+  fetchUser: () => Promise<void>;
   refreshActiveUsers: () => Promise<void>;
 }
 
@@ -54,46 +51,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(interval);
   }, [fetchUser, fetchActiveUsers]);
 
-  const loginAsGuest = async (name?: string): Promise<User> => {
-    setIsLoading(true);
-    try {
-      const res = await api.createGuest({ name });
-      setUser(res.user);
-      fetchActiveUsers();
-      return res.user;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const register = async (input: RegisterUserInput): Promise<User> => {
-    setIsLoading(true);
-    try {
-      const res = await api.register(input);
-      setUser(res.user);
-      fetchActiveUsers();
-      return res.user;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const login = async (input: LoginUserInput): Promise<User> => {
     setIsLoading(true);
     try {
       const res = await api.login(input);
-      setUser(res.user);
-      fetchActiveUsers();
-      return res.user;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loginWithGoogle = async (input: GoogleAuthInput): Promise<User> => {
-    setIsLoading(true);
-    try {
-      const res = await api.googleAuth(input);
       setUser(res.user);
       fetchActiveUsers();
       return res.user;
@@ -120,12 +81,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         isLoading,
         activeUsers,
-        loginAsGuest,
-        register,
         login,
-        loginWithGoogle,
         logout,
-        refreshUser: fetchUser,
+        fetchUser,
         refreshActiveUsers: fetchActiveUsers,
       }}
     >

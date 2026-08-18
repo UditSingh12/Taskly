@@ -72,9 +72,14 @@ export function TaskCard({
         {/* Assignee & Tags */}
         <div className="flex items-center gap-2 overflow-hidden">
           <div className="flex items-center gap-1.5">
-            <Avatar name={task.assigneeName || 'Admin'} size="sm" color="#4F46E5" />
+            <Avatar 
+                name={task.assignee?.name || 'Unassigned'} 
+                size="sm" 
+                color={task.assignee?.avatarColor || '#94a3b8'} 
+                url={task.assignee?.avatarUrl} 
+            />
             <span className="text-xs text-muted-foreground truncate hidden sm:inline">
-              {task.assigneeName || 'Admin'}
+              {task.assignee?.name || 'Unassigned'}
             </span>
           </div>
 

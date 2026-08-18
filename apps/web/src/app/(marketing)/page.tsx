@@ -13,7 +13,6 @@ import {
   Moon,
   Mail,
   Lock,
-  User as UserIcon,
   AlertCircle,
   Eye,
   EyeOff,
@@ -27,10 +26,8 @@ import { AuthModal } from '@/components/auth/AuthModal';
 
 export default function LandingPage() {
   const router = useRouter();
-  const { loginAsGuest, login, register, loginWithGoogle, user } = useAuth();
+  const { login } = useAuth();
 
-  const [authMode, setAuthMode] = React.useState<'guest' | 'login' | 'register'>('login');
-  const [name, setName] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [showPassword, setShowPassword] = React.useState(false);
@@ -47,51 +44,12 @@ export default function LandingPage() {
     setIsSubmitting(true);
 
     try {
-      if (authMode === 'register') {
-        if (!name.trim()) throw new Error('Please enter a username or full name');
-        if (!email.trim()) throw new Error('Please enter your work email');
-        if (password.length < 6) throw new Error('Password must be at least 6 characters');
-        await register({ name, email, password });
-      } else {
-        if (!email.trim()) throw new Error('Please enter your email');
-        if (!password) throw new Error('Please enter your password');
-        await login({ email, password });
-      }
+      if (!email.trim()) throw new Error('Please enter your email');
+      if (!password) throw new Error('Please enter your password');
+      await login({ email, password });
       router.push('/dashboard');
     } catch (err: any) {
       setAuthError(err.message || 'Authentication failed');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleContinueAsGuest = async () => {
-    setIsSubmitting(true);
-    setAuthError(null);
-    try {
-      await loginAsGuest();
-      router.push('/dashboard');
-    } catch (err: any) {
-      setAuthError(err.message || 'Guest login failed');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleGoogleAuth = async () => {
-    setIsSubmitting(true);
-    setAuthError(null);
-    try {
-      const gEmail = email.trim() || 'google.user@taskly.io';
-      const gName = name.trim() || 'Google User';
-      await loginWithGoogle({
-        email: gEmail,
-        name: gName,
-        picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(gName)}`,
-      });
-      router.push('/dashboard');
-    } catch (err: any) {
-      setAuthError(err.message || 'Google sign in failed');
     } finally {
       setIsSubmitting(false);
     }
@@ -134,9 +92,6 @@ export default function LandingPage() {
             <a href="#workflow" className="hover:text-foreground transition-colors">
               Workflow
             </a>
-            <a href="#auth" className="hover:text-foreground transition-colors">
-              Get Started
-            </a>
           </nav>
 
           {/* Right Actions & Theme Switcher */}
@@ -144,21 +99,11 @@ export default function LandingPage() {
             <ThemeToggle />
             <Button
               onClick={() => setModalOpen(true)}
-              variant="outline"
-              size="sm"
-              className="text-xs h-8"
-            >
-              Sign In
-            </Button>
-            <Button
-              onClick={handleContinueAsGuest}
               variant="primary"
               size="sm"
-              isLoading={isSubmitting}
               className="font-semibold shadow-sm text-xs px-3.5 h-8"
             >
-              <span>Instant Guest</span>
-              <ArrowRight className="h-3.5 w-3.5 ml-1" />
+              Sign In
             </Button>
           </div>
         </div>
@@ -175,7 +120,7 @@ export default function LandingPage() {
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-border/80 bg-secondary/60 text-xs font-medium text-muted-foreground shadow-xs"
           >
             <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
-            <span>Next-Generation Task Management • Manual, Google & Guest Login</span>
+            <span>Internal Team Collaboration Workspace</span>
           </motion.div>
 
           {/* Main Headline */}
@@ -203,60 +148,11 @@ export default function LandingPage() {
           >
             <div className="space-y-1 text-center sm:text-left">
               <h3 className="text-lg font-bold tracking-tight text-foreground">
-                Let&apos;s get back on track
+                Welcome back
               </h3>
               <p className="text-xs text-muted-foreground">
-                Sign in with your work email, create an account, or dive right in as a guest.
+                Sign in with your work email to access your workspace.
               </p>
-            </div>
-
-            {/* Mode Switcher Tabs */}
-            <div className="flex rounded-xl bg-secondary/70 p-1 border border-border/50">
-              <button
-                type="button"
-                suppressHydrationWarning
-                onClick={() => {
-                  setAuthMode('login');
-                  setAuthError(null);
-                }}
-                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                  authMode === 'login'
-                    ? 'bg-card text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Sign In
-              </button>
-              <button
-                type="button"
-                suppressHydrationWarning
-                onClick={() => {
-                  setAuthMode('register');
-                  setAuthError(null);
-                }}
-                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                  authMode === 'register'
-                    ? 'bg-card text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Sign Up
-              </button>
-              <button
-                type="button"
-                suppressHydrationWarning
-                onClick={() => {
-                  setAuthMode('guest');
-                  setAuthError(null);
-                }}
-                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                  authMode === 'guest'
-                    ? 'bg-card text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Guest
-              </button>
             </div>
 
             {/* Error Message */}
@@ -267,119 +163,49 @@ export default function LandingPage() {
               </div>
             )}
 
-            {authMode === 'guest' ? (
-              /* Instant Guest Flow */
-              <div className="space-y-3 pt-2">
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Guest mode launches a temporary sandbox workspace preloaded with sample tasks, projects, and collaboration simulation.
-                </p>
+            {/* Email/Password Form */}
+            <form onSubmit={handleAuthSubmit} className="space-y-3.5 pt-1">
+              <Input
+                label="Work Email"
+                type="email"
+                placeholder="alex@company.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                icon={<Mail className="h-4 w-4" />}
+                required
+              />
+
+              <div className="relative">
+                <Input
+                  label="Password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  icon={<Lock className="h-4 w-4" />}
+                  required
+                />
                 <button
                   type="button"
                   suppressHydrationWarning
-                  onClick={handleContinueAsGuest}
-                  disabled={isSubmitting}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-foreground px-4 py-3 text-sm font-semibold text-background shadow-md hover:opacity-95 active:scale-[0.98] transition-all disabled:opacity-50"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-[34px] text-muted-foreground hover:text-foreground"
                 >
-                  {isSubmitting ? 'Entering Workspace...' : '⚡ Launch Guest Workspace'}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-            ) : (
-              /* Email/Password Form (Sign In / Sign Up) */
-              <form onSubmit={handleAuthSubmit} className="space-y-3.5 pt-1">
-                {authMode === 'register' && (
-                  <Input
-                    label="Username / Name"
-                    placeholder="e.g. Alex Morgan"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    icon={<UserIcon className="h-4 w-4" />}
-                    required
-                  />
-                )}
 
-                <Input
-                  label="Work Email"
-                  type="email"
-                  placeholder="alex@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  icon={<Mail className="h-4 w-4" />}
-                  required
-                />
+              <Button
+                type="submit"
+                className="w-full h-10 font-semibold mt-4"
+                isLoading={isSubmitting}
+              >
+                Sign In
+              </Button>
+            </form>
 
-                <div className="relative">
-                  <Input
-                    label="Password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    icon={<Lock className="h-4 w-4" />}
-                    required
-                  />
-                  <button
-                    type="button"
-                    suppressHydrationWarning
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-[34px] text-muted-foreground hover:text-foreground"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full h-10 font-semibold"
-                  isLoading={isSubmitting}
-                >
-                  {authMode === 'register' ? 'Create Account' : 'Sign In'}
-                </Button>
-              </form>
-            )}
-
-            {/* Divider */}
-            <div className="relative my-4 text-center text-xs">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border" />
-              </div>
-              <span className="relative bg-card px-3 text-muted-foreground font-medium uppercase tracking-wider text-[10px]">
-                Or
-              </span>
-            </div>
-
-            {/* Google OAuth Button */}
-            <button
-              type="button"
-              suppressHydrationWarning
-              onClick={handleGoogleAuth}
-              disabled={isSubmitting}
-              className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-border bg-secondary/50 hover:bg-secondary py-2.5 text-sm font-medium text-foreground transition-all active:scale-[0.98]"
-            >
-              <svg className="h-4 w-4" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.35 24 12 24Z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15Z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98Z"
-                />
-              </svg>
-              <span>Continue with Google</span>
-            </button>
-
-            <p className="text-center text-[11px] text-muted-foreground/80 leading-normal">
-              By continuing, you agree to our{' '}
-              <span className="underline hover:text-foreground cursor-pointer">Terms of Service</span> and{' '}
-              <span className="underline hover:text-foreground cursor-pointer">Privacy Policy</span>.
+            <p className="text-center text-[11px] text-muted-foreground/80 leading-normal pt-4">
+              Need an account? Contact your administrator for an invite.
             </p>
           </motion.div>
         </div>
@@ -412,14 +238,6 @@ export default function LandingPage() {
                   Live Demo
                 </span>
               </div>
-              <Button
-                onClick={handleContinueAsGuest}
-                variant="primary"
-                size="sm"
-                className="text-xs h-7 px-3"
-              >
-                Open Full Board
-              </Button>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -505,8 +323,8 @@ export default function LandingPage() {
               },
               {
                 icon: Zap,
-                title: 'Instant Guest Access',
-                desc: 'Zero signup required. Create and manage tasks instantly with secure httpOnly session cookies.',
+                title: 'Admin Provisioning',
+                desc: 'Secure access controlled by administrators. Real org structures, zero unauthorized signups.',
               },
               {
                 icon: Table,

@@ -8,7 +8,8 @@
     "start": "node dist/server.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
-    "test": "echo \"API tests passed\""
+    "test": "echo \"API tests passed\"",
+    "db:seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
     "@taskly/shared-types": "workspace:*",

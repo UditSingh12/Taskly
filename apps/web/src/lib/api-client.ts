@@ -1,9 +1,6 @@
 import {
   User,
-  CreateGuestUserInput,
-  RegisterUserInput,
   LoginUserInput,
-  GoogleAuthInput,
   UpdateThemeInput,
   Task,
   CreateTaskInput,
@@ -52,28 +49,6 @@ class ApiClient {
 
   // ==================== Auth Endpoints ====================
 
-  async createGuest(input?: CreateGuestUserInput): Promise<{ user: User; token: string }> {
-    const res = await this.request<{ user: User; token: string }>('/auth/guest', {
-      method: 'POST',
-      body: JSON.stringify(input || {}),
-    });
-    if (typeof window !== 'undefined' && res.token) {
-      localStorage.setItem('taskly_token', res.token);
-    }
-    return res;
-  }
-
-  async register(input: RegisterUserInput): Promise<{ user: User; token: string }> {
-    const res = await this.request<{ user: User; token: string }>('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(input),
-    });
-    if (typeof window !== 'undefined' && res.token) {
-      localStorage.setItem('taskly_token', res.token);
-    }
-    return res;
-  }
-
   async login(input: LoginUserInput): Promise<{ user: User; token: string }> {
     const res = await this.request<{ user: User; token: string }>('/auth/login', {
       method: 'POST',
@@ -85,8 +60,8 @@ class ApiClient {
     return res;
   }
 
-  async googleAuth(input: GoogleAuthInput): Promise<{ user: User; token: string }> {
-    const res = await this.request<{ user: User; token: string }>('/auth/google', {
+  async acceptInvite(input: { token: string; password?: string }): Promise<{ user: User; token: string }> {
+    const res = await this.request<{ user: User; token: string }>('/auth/accept-invite', {
       method: 'POST',
       body: JSON.stringify(input),
     });
@@ -148,6 +123,25 @@ class ApiClient {
     });
   }
 
+  async requestProjectAccess(id: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/projects/${id}/request-access`, {
+      method: 'POST',
+    });
+  }
+
+  async addProjectMember(id: string, userId: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/projects/${id}/members`, {
+      method: 'POST',
+      body: JSON.stringify({ userId }),
+    });
+  }
+
+  async removeProjectMember(id: string, userId: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/projects/${id}/members/${userId}`, {
+      method: 'DELETE',
+    });
+  }
+
   // ==================== Task Endpoints ====================
 
   async getTasks(filter?: TaskQueryFilter): Promise<{ tasks: Task[] }> {
@@ -191,6 +185,48 @@ class ApiClient {
       method: 'PATCH',
       body: JSON.stringify(input),
     });
+  }
+
+  // ==================== Comment Endpoints ====================
+
+  async getComments(taskId: string): Promise<{ comments: import('@taskly/shared-types').Comment[] }> {
+    return this.request<{ comments: import('@taskly/shared-types').Comment[] }>(`/tasks/${taskId}/comments`);
+  }
+
+  async createComment(taskId: string, input: import('@taskly/shared-types').CreateCommentInput): Promise<{ comment: import('@taskly/shared-types').Comment }> {
+    return this.request<{ comment: import('@taskly/shared-types').Comment }>(`/tasks/${taskId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  }
+
+  // ==================== Admin Endpoints ====================
+
+  async getAdminTeam(): Promise<{ team: User[] }> {
+    return this.request<{ team: User[] }>('/admin/team');
+  }
+
+  async generateAdminInvite(input: import('@taskly/shared-types').AdminInviteInput): Promise<{ token: string }> {
+    return this.request<{ token: string }>('/admin/invite', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  }
+
+  async revokeAdminInvite(userId: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/admin/invite/${userId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async deactivateMember(userId: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/admin/deactivate/${userId}`, {
+      method: 'POST',
+    });
+  }
+
+  async getAdminAuditLog(): Promise<{ logs: import('@taskly/shared-types').AdminAuditLog[] }> {
+    return this.request<{ logs: import('@taskly/shared-types').AdminAuditLog[] }>('/admin/audit-log');
   }
 }
 

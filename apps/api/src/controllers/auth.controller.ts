@@ -16,26 +16,14 @@ const setAuthCookie = (res: Response, token: string) => {
 };
 
 export class AuthController {
-  static createGuest = asyncHandler(async (req: Request, res: Response) => {
-    const { user, token } = await AuthService.createGuestUser(req.body);
-    setAuthCookie(res, token);
-    res.status(201).json({ user, token });
-  });
-
-  static register = asyncHandler(async (req: Request, res: Response) => {
-    const { user, token } = await AuthService.register(req.body);
-    setAuthCookie(res, token);
-    res.status(201).json({ user, token });
-  });
-
   static login = asyncHandler(async (req: Request, res: Response) => {
     const { user, token } = await AuthService.login(req.body);
     setAuthCookie(res, token);
     res.status(200).json({ user, token });
   });
 
-  static googleAuth = asyncHandler(async (req: Request, res: Response) => {
-    const { user, token } = await AuthService.googleAuth(req.body);
+  static acceptInvite = asyncHandler(async (req: Request, res: Response) => {
+    const { user, token } = await AuthService.acceptInvite(req.body);
     setAuthCookie(res, token);
     res.status(200).json({ user, token });
   });
@@ -46,8 +34,16 @@ export class AuthController {
   });
 
   static getActiveUsers = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const activeUsers = await AuthService.getActiveUsers(req.user?._id?.toString());
-    res.status(200).json({ activeUsers });
+    const activeUsers = await AuthService.getActiveUsers();
+    
+    // Mark if it's the current user
+    const currentUserId = req.user?._id.toString();
+    const mappedUsers = activeUsers.map(u => ({
+      ...u,
+      isCurrentUser: u.id === currentUserId
+    }));
+
+    res.status(200).json({ activeUsers: mappedUsers });
   });
 
   static logout = asyncHandler(async (_req: Request, res: Response) => {

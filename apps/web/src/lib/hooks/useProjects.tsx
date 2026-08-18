@@ -14,6 +14,7 @@ interface ProjectContextType {
   createProject: (input: CreateProjectInput) => Promise<Project>;
   updateProject: (id: string, input: UpdateProjectInput) => Promise<Project>;
   deleteProject: (id: string) => Promise<void>;
+  requestAccess: (id: string) => Promise<void>;
   refreshProjects: () => Promise<void>;
 }
 
@@ -63,6 +64,11 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const requestAccess = async (id: string): Promise<void> => {
+    await api.requestProjectAccess(id);
+    await fetchProjects();
+  };
+
   const selectedProject = React.useMemo(() => {
     return projects.find((p) => p._id === selectedProjectId) || null;
   }, [projects, selectedProjectId]);
@@ -79,6 +85,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         createProject,
         updateProject,
         deleteProject,
+        requestAccess,
         refreshProjects: fetchProjects,
       }}
     >

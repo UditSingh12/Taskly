@@ -32,6 +32,13 @@ export const requireAuth = async (
       throw new AppError(401, 'User session not found or expired.');
     }
 
+    if (user.status !== 'active') {
+      throw new AppError(403, 'Your account is not active. Please contact an administrator.');
+    }
+
+    // Update presence (fire and forget to not block request)
+    UserModel.updateOne({ _id: user._id }, { lastActiveAt: new Date() }).catch(console.error);
+
     req.user = user;
     next();
   } catch (error: any) {

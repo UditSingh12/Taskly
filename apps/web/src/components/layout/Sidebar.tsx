@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   CheckSquare,
   Folder,
@@ -12,6 +12,7 @@ import {
   X,
   Layers,
   Sparkles,
+  ShieldAlert,
 } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Project } from '@taskly/shared-types';
@@ -34,6 +35,7 @@ export function Sidebar({
   onOpenNewProjectModal,
 }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, logout } = useAuth();
 
   return (
@@ -81,9 +83,15 @@ export function Sidebar({
               Overview
             </p>
             <button
-              onClick={() => onSelectProject && onSelectProject(null)}
+              onClick={() => {
+                if (pathname.includes('/admin')) {
+                  router.push('/dashboard');
+                } else {
+                  onSelectProject && onSelectProject(null);
+                }
+              }}
               className={`w-full flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium transition-colors ${
-                selectedProjectId === null
+                selectedProjectId === null && !pathname.includes('/admin')
                   ? 'bg-secondary text-foreground font-semibold shadow-sm'
                   : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
               }`}
@@ -93,6 +101,21 @@ export function Sidebar({
                 <span>All Tasks</span>
               </div>
             </button>
+            {user?.role === 'admin' && (
+              <Link
+                href="/dashboard/admin"
+                className={`w-full flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium transition-colors ${
+                  pathname.includes('/admin')
+                    ? 'bg-secondary text-foreground font-semibold shadow-sm'
+                    : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <ShieldAlert className="h-4 w-4 text-accent" />
+                  <span>Admin Dashboard</span>
+                </div>
+              </Link>
+            )}
           </div>
 
           {/* User Projects Section */}
@@ -131,7 +154,16 @@ export function Sidebar({
                   return (
                     <button
                       key={p._id}
-                      onClick={() => onSelectProject && onSelectProject(p._id)}
+                      onClick={() => {
+                        if (pathname.includes('/admin')) {
+                          router.push('/dashboard');
+                          // Project selection is handled by the context/component on load if we had a query param, but wait.
+                          // Actually, we can just select it in the provider.
+                          onSelectProject && onSelectProject(p._id);
+                        } else {
+                          onSelectProject && onSelectProject(p._id);
+                        }
+                      }}
                       className={`w-full flex items-center justify-between rounded-xl px-2.5 py-2 text-xs transition-colors text-left ${
                         isSelected
                           ? 'bg-secondary text-foreground font-semibold shadow-sm'
@@ -166,10 +198,10 @@ export function Sidebar({
               >
                 {user?.name?.charAt(0) || 'G'}
               </div>
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-foreground truncate">{user?.name || 'Guest'}</p>
-                <p className="text-[10px] text-muted-foreground truncate">
-                  {user?.isGuest ? 'Guest Access' : user?.email || 'Logged In'}
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-foreground truncate">{user?.name}</p>
+                <p className="text-[10px] text-muted-foreground truncate font-medium">
+                  {user?.jobTitle || 'Member'}
                 </p>
               </div>
             </div>

@@ -14,4 +14,8 @@ router.get('/:id', ProjectController.getProjectById);
 router.patch('/:id', validateBody(UpdateProjectSchema), ProjectController.updateProject);
 router.delete('/:id', ProjectController.deleteProject);
 
+router.post('/:id/request-access', ProjectController.requestAccess);
+router.post('/:id/members', ProjectController.addMember);
+router.delete('/:id/members/:userId', ProjectController.removeMember);
+
 export default router;
