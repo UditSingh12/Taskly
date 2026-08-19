@@ -216,10 +216,9 @@ class ApiClient {
     return this.request<{ requests: AssignmentRequest[] }>(`/tasks/${taskId}/assignment-requests`);
   }
 
-  async createAssignmentRequest(taskId: string, input: CreateAssignmentRequestInput): Promise<{ request: AssignmentRequest }> {
+  async createAssignmentRequest(taskId: string): Promise<{ request: AssignmentRequest }> {
     return this.request<{ request: AssignmentRequest }>(`/tasks/${taskId}/assignment-requests`, {
       method: 'POST',
-      body: JSON.stringify(input),
     });
   }
 

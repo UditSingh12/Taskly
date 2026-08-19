@@ -161,7 +161,7 @@ export function TaskModal({
     setIsRequesting(true);
     try {
       const { api } = await import('@/lib/api-client');
-      await api.createAssignmentRequest(task._id, { reason: 'I would like to work on this' });
+      await api.createAssignmentRequest(task._id);
       alert('Assignment requested successfully!');
       onClose();
     } catch (err: any) {

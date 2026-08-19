@@ -37,6 +37,7 @@ export function AiTaskCreator({ onTaskCreated }: AiTaskCreatorProps) {
         title: taskData.title || prompt,
         description: taskData.description,
         priority: taskData.priority || 'medium',
+        status: taskData.status || 'todo',
         dueDate: taskData.dueDate,
         tags: taskData.tags || [],
         projectId: taskData.projectId,
