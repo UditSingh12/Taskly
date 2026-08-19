@@ -58,6 +58,8 @@ export function TaskModal({
   const [isSaving, setIsSaving] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [isSubmittingComment, setIsSubmittingComment] = React.useState(false);
+  const [isRequesting, setIsRequesting] = React.useState(false);
+  const isAdmin = useAuth().user?.role === 'admin';
 
   React.useEffect(() => {
     if (task) {
@@ -136,6 +138,36 @@ export function TaskModal({
       console.error(err);
     } finally {
       setIsSubmittingComment(false);
+    }
+  };
+
+  const handleClaim = async () => {
+    if (!task) return;
+    setIsRequesting(true);
+    try {
+      const { api } = await import('@/lib/api-client');
+      await api.claimTask(task._id);
+      alert('Task claimed successfully!');
+      onClose(); // In a real app we'd refresh the task or list
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setIsRequesting(false);
+    }
+  };
+
+  const handleRequestAssignment = async () => {
+    if (!task) return;
+    setIsRequesting(true);
+    try {
+      const { api } = await import('@/lib/api-client');
+      await api.createAssignmentRequest(task._id, { reason: 'I would like to work on this' });
+      alert('Assignment requested successfully!');
+      onClose();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setIsRequesting(false);
     }
   };
 
@@ -303,16 +335,31 @@ export function TaskModal({
                 color={activeUsers.find(u => u.id === assigneeId)?.avatarColor}
                 size="sm" 
               />
-              <select
-                value={assigneeId}
-                onChange={(e) => setAssigneeId(e.target.value)}
-                className="bg-card border border-border rounded-md px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
-              >
-                <option value="">Unassigned</option>
-                {activeUsers.map(u => (
-                  <option key={u.id} value={u.id}>{u.name} {u.jobTitle ? `— ${u.jobTitle}` : ''}</option>
-                ))}
-              </select>
+              {isAdmin || !task ? (
+                <select
+                  value={assigneeId}
+                  onChange={(e) => setAssigneeId(e.target.value)}
+                  className="bg-card border border-border rounded-md px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+                >
+                  <option value="">Unassigned</option>
+                  {activeUsers.map(u => (
+                    <option key={u.id} value={u.id}>{u.name} {u.jobTitle ? `— ${u.jobTitle}` : ''}</option>
+                  ))}
+                </select>
+              ) : (
+                <span className="text-xs text-foreground font-medium">
+                  {activeUsers.find(u => u.id === assigneeId)?.name || 'Unassigned'}
+                </span>
+              )}
+              {task && !isAdmin && assigneeId !== activeUsers.find(u => u.isCurrentUser)?.id && (
+                <div className="ml-2">
+                  {!assigneeId ? (
+                    <Button type="button" size="sm" onClick={handleClaim} isLoading={isRequesting} variant="outline" className="h-6 text-[10px]">Claim Task</Button>
+                  ) : (
+                    <Button type="button" size="sm" onClick={handleRequestAssignment} isLoading={isRequesting} variant="outline" className="h-6 text-[10px]">Request Assignment</Button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

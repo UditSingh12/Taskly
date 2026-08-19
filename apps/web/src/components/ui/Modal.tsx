@@ -49,7 +49,7 @@ export function Modal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+        <div className="fixed inset-0 z-50 overflow-y-auto p-4 sm:p-6 text-center custom-scrollbar">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -60,6 +60,9 @@ export function Modal({
             className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
           />
 
+          {/* Trick to center the modal vertically */}
+          <span className="hidden sm:inline-block sm:h-screen sm:align-middle" aria-hidden="true">&#8203;</span>
+
           {/* Modal Card */}
           <motion.div
             initial={{ opacity: 0, scale: 0.96, y: 8 }}
@@ -67,7 +70,7 @@ export function Modal({
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className={cn(
-              'relative z-10 w-full rounded-2xl border border-border bg-card p-6 shadow-2xl text-card-foreground',
+              'relative z-10 inline-block w-full rounded-2xl border border-border bg-card p-6 shadow-2xl text-card-foreground text-left align-middle sm:my-8',
               maxWidths[maxWidth],
               className
             )}

@@ -13,6 +13,7 @@ import {
   Layers,
   Sparkles,
   ShieldAlert,
+  Sun,
 } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Project } from '@taskly/shared-types';
@@ -82,16 +83,30 @@ export function Sidebar({
             <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
               Overview
             </p>
+            <Link
+              href="/dashboard/today"
+              className={`w-full flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium transition-colors ${
+                pathname === '/dashboard/today'
+                  ? 'bg-secondary text-foreground font-semibold shadow-sm'
+                  : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Sun className="h-4 w-4 text-amber-500" />
+                <span>My Day</span>
+              </div>
+            </Link>
             <button
+              suppressHydrationWarning
               onClick={() => {
-                if (pathname.includes('/admin')) {
+                if (pathname !== '/dashboard') {
                   router.push('/dashboard');
                 } else {
                   onSelectProject && onSelectProject(null);
                 }
               }}
               className={`w-full flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium transition-colors ${
-                selectedProjectId === null && !pathname.includes('/admin')
+                selectedProjectId === null && pathname === '/dashboard'
                   ? 'bg-secondary text-foreground font-semibold shadow-sm'
                   : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
               }`}
@@ -126,6 +141,7 @@ export function Sidebar({
               </p>
               {onOpenNewProjectModal && (
                 <button
+                  suppressHydrationWarning
                   onClick={onOpenNewProjectModal}
                   className="p-1 text-muted-foreground hover:text-foreground rounded-lg hover:bg-secondary transition-colors"
                   title="Create Project"
@@ -140,6 +156,7 @@ export function Sidebar({
                 <p className="text-[11px] text-muted-foreground">No projects yet</p>
                 {onOpenNewProjectModal && (
                   <button
+                    suppressHydrationWarning
                     onClick={onOpenNewProjectModal}
                     className="mt-1 text-[11px] font-semibold text-primary hover:underline"
                   >
@@ -153,12 +170,11 @@ export function Sidebar({
                   const isSelected = selectedProjectId === p._id;
                   return (
                     <button
+                      suppressHydrationWarning
                       key={p._id}
                       onClick={() => {
-                        if (pathname.includes('/admin')) {
+                        if (pathname !== '/dashboard') {
                           router.push('/dashboard');
-                          // Project selection is handled by the context/component on load if we had a query param, but wait.
-                          // Actually, we can just select it in the provider.
                           onSelectProject && onSelectProject(p._id);
                         } else {
                           onSelectProject && onSelectProject(p._id);
@@ -207,6 +223,7 @@ export function Sidebar({
             </div>
 
             <button
+              suppressHydrationWarning
               onClick={logout}
               className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
               title="Sign Out"

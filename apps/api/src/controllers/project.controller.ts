@@ -58,4 +58,12 @@ export class ProjectController {
     await ProjectService.removeMember(req.user!._id.toString(), req.params.id, req.params.userId);
     res.status(200).json({ message: 'Member removed' });
   });
+
+  static denyRequest = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (req.user!.role !== 'admin') {
+      return res.status(403).json({ error: { message: 'Admin only', statusCode: 403 } });
+    }
+    await ProjectService.denyRequest(req.user!._id.toString(), req.params.id, req.params.userId);
+    res.status(200).json({ message: 'Request denied' });
+  });
 }

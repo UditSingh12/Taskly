@@ -33,4 +33,9 @@ export class TaskController {
     const tasks = await TaskService.reorderTasks(req.user!._id.toString(), req.body);
     res.status(200).json({ tasks });
   });
+
+  static claimTask = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const task = await TaskService.claimTask(req.user!._id.toString(), req.params.id);
+    res.status(200).json({ task });
+  });
 }

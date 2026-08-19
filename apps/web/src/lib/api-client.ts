@@ -11,6 +11,10 @@ import {
   CreateProjectInput,
   UpdateProjectInput,
   ActiveUser,
+  AssignmentRequest,
+  CreateAssignmentRequestInput,
+  Notification,
+  ChangePasswordInput,
 } from '@taskly/shared-types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
@@ -93,6 +97,13 @@ class ApiClient {
     });
   }
 
+  async changePassword(input: ChangePasswordInput): Promise<{ message: string }> {
+    return this.request<{ message: string }>('/auth/change-password', {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    });
+  }
+
   // ==================== Project Endpoints ====================
 
   async getProjects(): Promise<{ projects: Project[] }> {
@@ -133,6 +144,12 @@ class ApiClient {
     return this.request<{ message: string }>(`/projects/${id}/members`, {
       method: 'POST',
       body: JSON.stringify({ userId }),
+    });
+  }
+
+  async denyProjectRequest(id: string, userId: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/projects/${id}/request-access/${userId}`, {
+      method: 'DELETE',
     });
   }
 
@@ -180,10 +197,36 @@ class ApiClient {
     });
   }
 
+  async claimTask(id: string): Promise<{ task: Task }> {
+    return this.request<{ task: Task }>(`/tasks/${id}/claim`, {
+      method: 'PATCH',
+    });
+  }
+
   async reorderTasks(input: ReorderTasksInput): Promise<{ tasks: Task[] }> {
     return this.request<{ tasks: Task[] }>('/tasks/reorder', {
       method: 'PATCH',
       body: JSON.stringify(input),
+    });
+  }
+
+  // ==================== Assignment Request Endpoints ====================
+
+  async getAssignmentRequests(taskId: string): Promise<{ requests: AssignmentRequest[] }> {
+    return this.request<{ requests: AssignmentRequest[] }>(`/tasks/${taskId}/assignment-requests`);
+  }
+
+  async createAssignmentRequest(taskId: string, input: CreateAssignmentRequestInput): Promise<{ request: AssignmentRequest }> {
+    return this.request<{ request: AssignmentRequest }>(`/tasks/${taskId}/assignment-requests`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  }
+
+  async processAssignmentRequest(id: string, approve: boolean): Promise<{ request: AssignmentRequest }> {
+    return this.request<{ request: AssignmentRequest }>(`/assignment-requests/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ approve }),
     });
   }
 
@@ -227,6 +270,36 @@ class ApiClient {
 
   async getAdminAuditLog(): Promise<{ logs: import('@taskly/shared-types').AdminAuditLog[] }> {
     return this.request<{ logs: import('@taskly/shared-types').AdminAuditLog[] }>('/admin/audit-log');
+  }
+
+  // ==================== Notification Endpoints ====================
+
+  async getNotifications(limit = 20): Promise<{ notifications: Notification[] }> {
+    return this.request<{ notifications: Notification[] }>(`/notifications?limit=${limit}`);
+  }
+
+  async getUnreadNotificationCount(): Promise<{ count: number }> {
+    return this.request<{ count: number }>('/notifications/unread-count');
+  }
+
+  async markNotificationAsRead(id: string): Promise<{ notification: Notification }> {
+    return this.request<{ notification: Notification }>(`/notifications/${id}/read`, {
+      method: 'PATCH',
+    });
+  }
+
+  async markAllNotificationsAsRead(): Promise<{ message: string }> {
+    return this.request<{ message: string }>('/notifications/read-all', {
+      method: 'PATCH',
+    });
+  }
+  // ==================== AI Endpoints ====================
+
+  async parseAiTask(prompt: string): Promise<{ parsed: any }> {
+    return this.request<{ parsed: any }>('/ai/parse-task', {
+      method: 'POST',
+      body: JSON.stringify({ prompt }),
+    });
   }
 }
 

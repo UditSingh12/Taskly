@@ -3,6 +3,7 @@ import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { AuthProvider } from '@/lib/hooks/useAuth';
+import { CommandPalette } from '@/components/ui/CommandPalette';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -37,7 +38,10 @@ export default function RootLayout({
         className="min-h-screen bg-background font-sans text-foreground antialiased selection:bg-accent selection:text-white"
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            {children}
+            <CommandPalette />
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -4,6 +4,9 @@ import userRoutes from './user.routes.js';
 import taskRoutes from './task.routes.js';
 import projectRoutes from './project.routes.js';
 import adminRoutes from './admin.routes.js';
+import assignmentRequestRoutes from './assignment-request.routes.js';
+import notificationRoutes from './notification.routes.js';
+import aiRoutes from './ai.routes.js';
 
 const router: Router = Router();
 
@@ -16,5 +19,8 @@ router.use('/users', userRoutes);
 router.use('/tasks', taskRoutes);
 router.use('/projects', projectRoutes);
 router.use('/admin', adminRoutes);
+router.use('/assignment-requests', assignmentRequestRoutes);
+router.use('/notifications', notificationRoutes);
+router.use('/ai', aiRoutes);
 
 export default router;

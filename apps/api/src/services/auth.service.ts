@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { env } from '../config/env.js';
 import { UserModel } from '../models/user.model.js';
+import { NotificationService } from './notification.service.js';
 import {
   LoginUserInput,
   AcceptInviteInput,
@@ -86,6 +87,16 @@ export class AuthService {
 
     await user.save();
 
+    const admins = await UserModel.find({ role: 'admin', status: 'active' });
+    for (const admin of admins) {
+      await NotificationService.createNotification(
+        admin._id.toString(),
+        'invite_accepted',
+        `User ${user.name} (${user.email}) has accepted their invite and joined the organization.`,
+        user._id.toString()
+      );
+    }
+
     const token = this.createToken(user._id.toString());
 
     return {
@@ -125,5 +136,21 @@ export class AuthService {
       jobTitle: u.jobTitle,
       statusText: 'Online',
     }));
+  }
+
+  static async changePassword(userId: string, input: import('@taskly/shared-types').ChangePasswordInput): Promise<void> {
+    const user = await UserModel.findById(userId).select('+password');
+    if (!user || !user.password) {
+      throw new AppError(404, 'User not found or password not set.');
+    }
+
+    const isMatch = await bcrypt.compare(input.oldPassword, user.password);
+    if (!isMatch) {
+      throw new AppError(401, 'Incorrect current password.');
+    }
+
+    const hashedPassword = await bcrypt.hash(input.newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
   }
 }

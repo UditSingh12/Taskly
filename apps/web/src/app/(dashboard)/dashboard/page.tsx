@@ -25,6 +25,7 @@ export default function DashboardPage() {
   const [selectedPriority, setSelectedPriority] = React.useState<TaskPriority | undefined>();
   const [selectedStatus, setSelectedStatus] = React.useState<TaskStatus | undefined>();
   const [isRequesting, setIsRequesting] = React.useState(false);
+  const [requestSuccess, setRequestSuccess] = React.useState(false);
 
   // Ensure user session exists
   React.useEffect(() => {
@@ -124,6 +125,8 @@ export default function DashboardPage() {
     try {
       setIsRequesting(true);
       await requestAccess(selectedProjectId);
+      setRequestSuccess(true);
+      setTimeout(() => setRequestSuccess(false), 5000);
     } catch (e) {
       console.error('Failed to request access:', e);
     } finally {
@@ -234,7 +237,12 @@ export default function DashboardPage() {
                 ? 'Your request to join this project is pending approval from an administrator.'
                 : 'You need to be a member of this project to view and manage its tasks. Request access to join.'}
             </p>
-            {!isPendingAccess && (
+            {requestSuccess && (
+              <div className="mb-4 p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-600 text-sm font-medium">
+                Request has been sent to admin (Udit Singh)
+              </div>
+            )}
+            {!isPendingAccess && !requestSuccess && (
               <Button onClick={handleRequestAccess} disabled={isRequesting} size="lg">
                 <Lock className="w-4 h-4 mr-2" />
                 {isRequesting ? 'Requesting...' : 'Request Access'}

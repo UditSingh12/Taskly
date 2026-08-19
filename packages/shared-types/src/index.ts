@@ -52,6 +52,12 @@ export const UpdateThemeSchema = z.object({
 });
 export type UpdateThemeInput = z.infer<typeof UpdateThemeSchema>;
 
+export const ChangePasswordSchema = z.object({
+  oldPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z.string().min(6, 'New password must be at least 6 characters long'),
+});
+export type ChangePasswordInput = z.infer<typeof ChangePasswordSchema>;
+
 // ==========================================
 // Project Schemas & Types
 // ==========================================
@@ -114,6 +120,7 @@ export const TaskSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
   description: z.string().max(5000).optional(),
   status: TaskStatusEnum.default('todo'),
+  assignmentStatus: z.enum(['unassigned', 'assigned', 'pending_request']).default('unassigned'),
   priority: TaskPriorityEnum.default('medium'),
   dueDate: z.coerce.date().optional().nullable(),
   tags: z.array(z.string().max(30)).default([]),
@@ -141,6 +148,58 @@ export const CreateTaskSchema = z.object({
   order: z.number().int().optional(),
 });
 export type CreateTaskInput = z.infer<typeof CreateTaskSchema>;
+
+// ==========================================
+// Assignment Request Schemas & Types
+// ==========================================
+
+export const AssignmentRequestStatusEnum = z.enum(['pending', 'approved', 'rejected']);
+export type AssignmentRequestStatus = z.infer<typeof AssignmentRequestStatusEnum>;
+
+export const AssignmentRequestSchema = z.object({
+  _id: z.string(),
+  taskId: z.string(),
+  requesterId: z.string(),
+  requester: UserSchema.pick({ _id: true, name: true, avatarColor: true, avatarUrl: true }).optional(),
+  status: AssignmentRequestStatusEnum.default('pending'),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date().optional(),
+});
+export type AssignmentRequest = z.infer<typeof AssignmentRequestSchema>;
+
+export const CreateAssignmentRequestSchema = z.object({
+  taskId: z.string(),
+});
+export type CreateAssignmentRequestInput = z.infer<typeof CreateAssignmentRequestSchema>;
+
+// ==========================================
+// Notification Schemas & Types
+// ==========================================
+
+export const NotificationTypeEnum = z.enum([
+  'assigned', 
+  'assignment_requested', 
+  'assignment_approved', 
+  'assignment_rejected', 
+  'status_changed', 
+  'mentioned', 
+  'invite_accepted',
+  'project_request',
+  'task_created'
+]);
+export type NotificationType = z.infer<typeof NotificationTypeEnum>;
+
+export const NotificationSchema = z.object({
+  _id: z.string(),
+  userId: z.string(),
+  type: NotificationTypeEnum,
+  taskId: z.string().optional().nullable(),
+  actorId: z.string().optional(),
+  message: z.string(),
+  read: z.boolean().default(false),
+  createdAt: z.coerce.date(),
+});
+export type Notification = z.infer<typeof NotificationSchema>;
 
 export const UpdateTaskSchema = CreateTaskSchema.partial();
 export type UpdateTaskInput = z.infer<typeof UpdateTaskSchema>;

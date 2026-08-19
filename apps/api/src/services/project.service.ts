@@ -27,8 +27,8 @@ export class ProjectService {
           color: json.color || '#4F46E5',
           icon: json.icon || 'folder',
           owner: json.owner.toString(),
-          memberIds: json.members?.map((m: any) => m.toString()) || [],
-          pendingMemberIds: json.pendingMembers?.map((m: any) => m.toString()) || [],
+          memberIds: json.memberIds || [],
+          pendingMemberIds: json.pendingMemberIds || [],
           taskCount: total,
           completedTaskCount: completed,
           createdAt: json.createdAt ? new Date(json.createdAt) : undefined,
@@ -54,8 +54,8 @@ export class ProjectService {
       color: json.color || '#4F46E5',
       icon: json.icon || 'folder',
       owner: json.owner.toString(),
-      memberIds: json.members?.map((m: any) => m.toString()) || [],
-      pendingMemberIds: json.pendingMembers?.map((m: any) => m.toString()) || [],
+      memberIds: json.memberIds || [],
+      pendingMemberIds: json.pendingMemberIds || [],
       taskCount: 0,
       completedTaskCount: 0,
       createdAt: json.createdAt ? new Date(json.createdAt) : undefined,
@@ -88,8 +88,8 @@ export class ProjectService {
       color: json.color || '#4F46E5',
       icon: json.icon || 'folder',
       owner: json.owner.toString(),
-      memberIds: json.members?.map((m: any) => m.toString()) || [],
-      pendingMemberIds: json.pendingMembers?.map((m: any) => m.toString()) || [],
+      memberIds: json.memberIds || [],
+      pendingMemberIds: json.pendingMemberIds || [],
       taskCount: total,
       completedTaskCount: completed,
       createdAt: json.createdAt ? new Date(json.createdAt) : undefined,
@@ -150,6 +150,28 @@ export class ProjectService {
     }
 
     project.pendingMembers.push(uid);
+    await project.save();
+
+    // Trigger notification to Admins
+    try {
+      const { NotificationService } = await import('./notification.service.js');
+      await NotificationService.notifyProjectAccessRequest(userId, projectId, project.name);
+    } catch (err) {
+      console.error('Failed to notify admins of project request', err);
+    }
+  }
+
+  static async denyRequest(adminId: string, projectId: string, targetUserId: string): Promise<void> {
+    if (!mongoose.Types.ObjectId.isValid(projectId)) throw new AppError(400, 'Invalid project ID');
+    if (!mongoose.Types.ObjectId.isValid(targetUserId)) throw new AppError(400, 'Invalid user ID');
+
+    const project = await ProjectModel.findById(projectId);
+    if (!project) throw new AppError(404, 'Project not found');
+
+    const uid = new mongoose.Types.ObjectId(targetUserId);
+    
+    // Remove from pending
+    project.pendingMembers = project.pendingMembers.filter(id => !id.equals(uid));
     await project.save();
   }
 

@@ -3,6 +3,7 @@ import { TaskModel } from '../models/task.model.js';
 import { UserModel } from '../models/user.model.js';
 import { ProjectModel } from '../models/project.model.js';
 import { AdminAuditLogModel } from '../models/audit-log.model.js';
+import { NotificationService } from './notification.service.js';
 import {
   CreateTaskInput,
   UpdateTaskInput,
@@ -21,6 +22,7 @@ const toTask = (doc: any): Task => {
     title: json.title,
     description: json.description || '',
     status: json.status,
+    assignmentStatus: json.assignmentStatus || 'unassigned',
     priority: json.priority,
     dueDate: json.dueDate ? new Date(json.dueDate) : null,
     tags: json.tags || [],
@@ -95,10 +97,13 @@ export class TaskService {
     const user = await UserModel.findById(userId);
     if (!user) throw new AppError(401, 'User not found');
     
-    if (input.projectId && user.role !== 'admin') {
-      const project = await ProjectModel.findById(input.projectId);
-      if (!project || !project.members.includes(new mongoose.Types.ObjectId(userId))) {
-        throw new AppError(403, 'You must be a member of this project to create tasks in it.');
+    let project: any = null;
+    if (input.projectId) {
+      project = await ProjectModel.findById(input.projectId);
+      if (user.role !== 'admin') {
+        if (!project || !project.members.includes(new mongoose.Types.ObjectId(userId))) {
+          throw new AppError(403, 'You must be a member of this project to create tasks in it.');
+        }
       }
     }
 
@@ -106,12 +111,39 @@ export class TaskService {
       ...input,
       projectId: input.projectId ? new mongoose.Types.ObjectId(input.projectId) : null,
       assignee: input.assigneeId ? new mongoose.Types.ObjectId(input.assigneeId) : null,
+      assignmentStatus: input.assigneeId ? 'assigned' : 'unassigned',
       owner: new mongoose.Types.ObjectId(userId),
       order: input.order !== undefined ? input.order : nextOrder,
       activity
     });
 
     await task.populate('assignee', 'name avatarColor avatarUrl');
+
+    if (input.assigneeId && input.assigneeId !== userId) {
+      await NotificationService.createNotification(
+        input.assigneeId,
+        'assigned',
+        `You were assigned to a new task: ${task.title}`,
+        userId,
+        task._id.toString()
+      );
+    }
+
+    // Notify project members (except creator and assignee, who are already handled)
+    if (project && project.members) {
+      for (const memberId of project.members) {
+        const memberIdStr = memberId.toString();
+        if (memberIdStr !== userId && memberIdStr !== input.assigneeId) {
+          await NotificationService.createNotification(
+            memberIdStr,
+            'task_created',
+            `${user.name} created a new task in ${project.name}: ${task.title}`,
+            userId,
+            task._id.toString()
+          );
+        }
+      }
+    }
 
     return toTask(task);
   }
@@ -143,6 +175,31 @@ export class TaskService {
     const user = await UserModel.findById(userId);
     if (!user) throw new AppError(401, 'User not found');
 
+    // Status transition gating logic
+    if (input.status && input.status !== task.status) {
+      const isAdmin = user.role === 'admin';
+      const isCreatorOrAssignee = task.owner.toString() === userId || (task.assignee && task.assignee.toString() === userId);
+      
+      if (!isAdmin) {
+        if (!isCreatorOrAssignee) {
+          throw new AppError(403, 'Only admins or the task owner/assignee can change task status.');
+        }
+
+        const allowedTransitions: Record<string, string[]> = {
+          'todo': ['doing'],
+          'doing': ['todo', 'completed'],
+          'completed': [],
+          'on_hold': [] // Only admins can move out of on_hold or reopen completed
+        };
+
+        const allowed = allowedTransitions[task.status] || [];
+        if (!allowed.includes(input.status)) {
+          throw new AppError(403, `Members cannot transition task from ${task.status} to ${input.status}.`);
+        }
+      }
+    }
+
+
     // Enforce edit permissions: Admin, Creator (owner), Assignee, or Project Member
     const isOwner = task.owner.toString() === userId;
     const isAssignee = task.assignee && task.assignee.toString() === userId;
@@ -166,8 +223,16 @@ export class TaskService {
         ? new mongoose.Types.ObjectId(input.projectId)
         : null;
     }
+    
+    // Admins can direct-assign
     if (input.assigneeId !== undefined) {
-      updatePayload.assignee = input.assigneeId ? new mongoose.Types.ObjectId(input.assigneeId) : null;
+      if (isAdmin) {
+         updatePayload.assignee = input.assigneeId ? new mongoose.Types.ObjectId(input.assigneeId) : null;
+         updatePayload.assignmentStatus = input.assigneeId ? 'assigned' : 'unassigned';
+      } else {
+         // Prevent normal users from updating assignee via generic update (they must use claim or request flows)
+         throw new AppError(403, 'Members cannot directly reassign tasks. Use the claim or request workflow.');
+      }
     }
 
     const newActivities: TaskActivity[] = [];
@@ -225,6 +290,50 @@ export class TaskService {
             targetId: taskId,
             details: { changes: newActivities }
         });
+    }
+
+    // Trigger Notifications
+    if (input.assigneeId !== undefined && input.assigneeId !== (task.assignee?.toString() || undefined)) {
+        if (input.assigneeId) {
+            await NotificationService.createNotification(
+                input.assigneeId,
+                'assigned',
+                `You were assigned to task: ${updatedTask.title}`,
+                userId,
+                updatedTask._id.toString()
+            );
+        }
+    }
+
+    if (input.status && input.status !== task.status) {
+        if (updatedTask.assignee && updatedTask.assignee._id.toString() !== userId) {
+            await NotificationService.createNotification(
+                updatedTask.assignee._id.toString(),
+                'status_changed',
+                `Status of task "${updatedTask.title}" was changed to ${input.status}`,
+                userId,
+                updatedTask._id.toString()
+            );
+        }
+
+        // Notify project members if a task was completed
+        if (input.status === 'completed' && updatedTask.projectId) {
+            const project = await ProjectModel.findById(updatedTask.projectId);
+            if (project && project.members) {
+                for (const memberId of project.members) {
+                    const memberIdStr = memberId.toString();
+                    if (memberIdStr !== userId && memberIdStr !== updatedTask.assignee?._id?.toString()) {
+                        await NotificationService.createNotification(
+                            memberIdStr,
+                            'status_changed',
+                            `Task "${updatedTask.title}" in ${project.name} was completed by ${user.name}`,
+                            userId,
+                            updatedTask._id.toString()
+                        );
+                    }
+                }
+            }
+        }
     }
 
     return toTask(updatedTask);
@@ -291,5 +400,45 @@ export class TaskService {
         .sort({ status: 1, order: 1 });
 
     return updatedTasks.map(toTask);
+  }
+
+  static async claimTask(userId: string, taskId: string): Promise<Task> {
+    if (!mongoose.Types.ObjectId.isValid(taskId)) throw new AppError(400, 'Invalid task ID');
+    
+    const task = await TaskModel.findById(taskId);
+    if (!task) throw new AppError(404, 'Task not found');
+
+    const user = await UserModel.findById(userId);
+    if (!user) throw new AppError(401, 'User not found');
+
+    // Only unassigned tasks can be claimed directly
+    if (task.assignee || task.assignmentStatus === 'assigned') {
+      throw new AppError(400, 'Task is already assigned. Submit an assignment request instead.');
+    }
+
+    const activity: TaskActivity = {
+      type: 'assignee_change',
+      actorId: userId,
+      fromValue: 'unassigned',
+      toValue: userId,
+      timestamp: new Date()
+    };
+
+    const updatedTask = await TaskModel.findByIdAndUpdate(
+      taskId,
+      {
+        $set: { 
+          assignee: new mongoose.Types.ObjectId(userId),
+          assignmentStatus: 'assigned'
+        },
+        $push: { activity }
+      },
+      { new: true, runValidators: true }
+    ).populate('assignee', 'name avatarColor avatarUrl');
+
+    if (!updatedTask) throw new AppError(404, 'Task not found');
+    
+    // We'll hook up notifications later, but for now we're returning the task
+    return toTask(updatedTask);
   }
 }

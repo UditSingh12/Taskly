@@ -31,10 +31,12 @@ export function Avatar({
     xl: 'h-16 w-16 text-2xl',
   };
 
+  const dicebearUrl = url || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}&backgroundColor=${color.replace('#', '')}&scale=80`;
+
   return (
     <div
       className={cn(
-        'relative inline-flex shrink-0 items-center justify-center rounded-full font-medium text-white shadow-sm ring-1 ring-white/10 select-none',
+        'relative inline-flex shrink-0 items-center justify-center rounded-full font-medium text-white shadow-sm ring-1 ring-white/10 select-none overflow-hidden',
         sizes[size],
         className
       )}
@@ -42,7 +44,7 @@ export function Avatar({
       title={name}
       {...props}
     >
-      <span>{getInitials(name)}</span>
+      <img src={dicebearUrl} alt={name} className="w-full h-full object-cover" />
     </div>
   );
 }

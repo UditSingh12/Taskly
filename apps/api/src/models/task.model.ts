@@ -45,6 +45,12 @@ const TaskSchema = new Schema<ITaskDocument>(
       default: 'todo',
       index: true,
     },
+    assignmentStatus: {
+      type: String,
+      enum: ['unassigned', 'assigned', 'pending_request'],
+      default: 'unassigned',
+      index: true,
+    },
     priority: {
       type: String,
       enum: ['low', 'medium', 'high'],

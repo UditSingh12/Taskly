@@ -61,6 +61,16 @@ export function ManageMembersModal({
     }
   };
 
+  const handleDeny = async (userId: string) => {
+    if (!project) return;
+    try {
+      await api.denyProjectRequest(project._id, userId);
+      await onUpdate();
+    } catch (err) {
+      console.error('Failed to deny', err);
+    }
+  };
+
   const pendingUsers = team.filter((u) => project?.pendingMemberIds?.includes(u._id));
   const activeMembers = team.filter((u) => project?.memberIds?.includes(u._id));
   const otherUsers = team.filter(
@@ -134,9 +144,14 @@ export function ManageMembersModal({
                           <div className="text-xs text-muted-foreground">{u.email}</div>
                         </div>
                       </div>
-                      <Button size="sm" onClick={() => handleApprove(u._id)}>
-                        Approve
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" onClick={() => handleApprove(u._id)}>
+                          Approve
+                        </Button>
+                        <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10" onClick={() => handleDeny(u._id)}>
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>

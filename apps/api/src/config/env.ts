@@ -7,7 +7,8 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(5000),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   MONGODB_URI: z.string().min(1, 'MONGODB_URI is required and cannot be empty'),
-  JWT_SECRET: z.string().min(10, 'JWT_SECRET must be at least 10 characters long'),
+  JWT_SECRET: z.string().min(10).default('default_jwt_secret_change_me_in_prod'),
+  OPENROUTER_API_KEY: z.string().optional(),
   FRONTEND_URL: z.string().default('http://localhost:3000'),
 });
 
