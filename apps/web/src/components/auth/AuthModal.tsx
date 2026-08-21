@@ -41,7 +41,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       await login({ email, password });
       
       onClose();
-      router.push('/dashboard');
+      router.push('/dashboard/today');
     } catch (err: any) {
       setError(err.message || 'Authentication failed. Please try again.');
     } finally {

@@ -36,7 +36,7 @@ export default function AcceptInvitePage({ params }: { params: Promise<{ token: 
       await fetchUser();
       
       setTimeout(() => {
-        router.push('/dashboard');
+        router.push('/dashboard/today');
       }, 1500);
       
     } catch (err: any) {

@@ -48,7 +48,7 @@ export default function LandingPage() {
       if (!email.trim()) throw new Error('Please enter your email');
       if (!password) throw new Error('Please enter your password');
       await login({ email, password });
-      router.push('/dashboard');
+      router.push('/dashboard/today');
     } catch (err: any) {
       setAuthError(err.message || 'Authentication failed');
     } finally {
