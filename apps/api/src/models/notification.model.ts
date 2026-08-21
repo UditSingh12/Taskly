@@ -27,7 +27,11 @@ const NotificationSchema = new Schema<INotificationDocument>(
         'mentioned', 
         'invite_accepted',
         'project_request',
-        'task_created'
+        'task_created',
+        'comment_added',
+        'tags_changed',
+        'description_changed',
+        'assignee_changed'
       ],
       required: true,
     },

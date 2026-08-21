@@ -33,6 +33,21 @@ export class CommentService {
     });
 
     await comment.populate('author', 'name avatarColor avatarUrl');
+    
+    // Notify project members about the new comment
+    const user = await import('../models/user.model.js').then(m => m.UserModel.findById(userId));
+    if (user) {
+      const { NotificationService } = await import('./notification.service.js');
+      await NotificationService.notifyProjectMembers(
+        task.projectId?.toString() || null,
+        userId,
+        'comment_added',
+        `${user.name} commented on task "${task.title}"`,
+        task._id.toString(),
+        task.assignee?.toString()
+      );
+    }
+
     return comment.toJSON() as unknown as Comment;
   }
 }

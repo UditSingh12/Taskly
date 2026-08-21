@@ -4,24 +4,21 @@ import * as React from 'react';
 import { api } from '@/lib/api-client';
 import { Task, TaskStatus } from '@taskly/shared-types';
 import { Header } from '@/components/layout/Header';
-import { TaskBoard } from '@/components/tasks/TaskBoard';
-import { TaskTable } from '@/components/tasks/TaskTable';
 import { AiTaskCreator } from '@/components/tasks/AiTaskCreator';
+import { PremiumGreeting } from '@/components/dashboard/PremiumGreeting';
+import { useAuth } from '@/lib/hooks/useAuth';
 
 export default function TodayPage() {
+  const { user } = useAuth();
   const [tasks, setTasks] = React.useState<Task[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [view, setView] = React.useState<'board' | 'table'>('board');
 
   const fetchTasks = async () => {
+    if (!user) return;
     try {
       setIsLoading(true);
-      // We could use an endpoint specific to 'today', but for now we fetch all
-      // or we can pass a query param ?my_day=true if we implemented it, 
-      // but let's just filter client-side for now for simplicity, or we assume all for demonstration if we have no specific filter.
-      // Actually, since we need to group by Overdue, Due Today, In Progress, we can just fetch all assigned tasks or tasks where we are the assignee.
-      const res = await api.getTasks(); 
-      // Filter for tasks we care about (we can assume tasks assigned to 'me' or just all for this demo, let's fetch all and filter client side)
+      const res = await api.getTasks({ assigneeId: user._id }); 
       setTasks(res.tasks);
     } catch (err) {
       console.error(err);
@@ -32,9 +29,8 @@ export default function TodayPage() {
 
   React.useEffect(() => {
     fetchTasks();
-  }, []);
+  }, [user]);
 
-  // Filter tasks into categories: Overdue, Due Today, In Progress
   const now = new Date();
   now.setHours(0, 0, 0, 0);
 
@@ -58,8 +54,10 @@ export default function TodayPage() {
         onStatusChange={() => {}}
       />
       <div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8 space-y-8 max-w-7xl mx-auto w-full">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight mb-2">My Day</h1>
+        <PremiumGreeting />
+        
+        <div className="text-center mt-2 mb-8">
+          <h1 className="text-2xl font-bold tracking-tight mb-2">My Day Tasks</h1>
           <p className="text-muted-foreground mb-6 text-sm">Focus on what matters today. Create tasks instantly using AI.</p>
           <AiTaskCreator onTaskCreated={fetchTasks} />
         </div>

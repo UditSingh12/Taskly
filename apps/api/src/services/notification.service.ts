@@ -67,6 +67,28 @@ export class NotificationService {
     });
   }
 
+  static async notifyProjectMembers(
+    projectId: string | null,
+    actorId: string,
+    type: string,
+    message: string,
+    taskId?: string,
+    assigneeId?: string | null
+  ): Promise<void> {
+    if (projectId) {
+      const { ProjectModel } = await import('../models/project.model.js');
+      const project = await ProjectModel.findById(projectId);
+      if (project && project.members) {
+        for (const memberId of project.members) {
+          await this.createNotification(memberId.toString(), type, message, actorId, taskId);
+        }
+      }
+    } else if (assigneeId) {
+      // Independent task, just notify the assignee
+      await this.createNotification(assigneeId, type, message, actorId, taskId);
+    }
+  }
+
   static async notifyProjectAccessRequest(requesterId: string, projectId: string, projectName: string): Promise<void> {
     const { UserModel } = await import('../models/user.model.js');
     const admins = await UserModel.find({ role: 'admin' });

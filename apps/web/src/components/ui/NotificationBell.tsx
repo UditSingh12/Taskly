@@ -64,6 +64,7 @@ export function NotificationBell() {
   return (
     <div className="relative">
       <button
+        suppressHydrationWarning
         onClick={() => setShowDropdown(!showDropdown)}
         className="relative p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
       >

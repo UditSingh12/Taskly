@@ -8,5 +8,6 @@ const router = Router();
 router.use(requireAuth);
 
 router.post('/parse-task', aiParserLimiter, AiController.parseTask);
+router.get('/greeting', AiController.generateGreeting);
 
 export default router;

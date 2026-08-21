@@ -4,7 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { api } from '@/lib/api-client';
-import { User, AdminAuditLog } from '@taskly/shared-types';
+import type { User, AdminAuditLog } from '@taskly/shared-types';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Avatar } from '@/components/ui/Avatar';

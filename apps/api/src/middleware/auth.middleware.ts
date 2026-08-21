@@ -36,9 +36,11 @@ export const requireAuth = async (
       throw new AppError(403, 'Your account is not active. Please contact an administrator.');
     }
 
-    // Update presence (fire and forget to not block request)
-    UserModel.updateOne({ _id: user._id }, { lastActiveAt: new Date() }).catch(console.error);
-
+    // Update presence (fire and forget) - throttled to once every 5 minutes to prevent DB thrashing
+    const FIVE_MINUTES = 5 * 60 * 1000;
+    if (!user.lastActiveAt || (Date.now() - new Date(user.lastActiveAt).getTime() > FIVE_MINUTES)) {
+      UserModel.updateOne({ _id: user._id }, { lastActiveAt: new Date() }).catch(console.error);
+    }
     req.user = user;
     next();
   } catch (error: any) {

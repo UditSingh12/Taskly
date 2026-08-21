@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Project } from '@taskly/shared-types';
+import { Logo } from '@/components/ui/Logo';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -57,12 +58,12 @@ export function Sidebar({
         {/* Workspace Switcher Header */}
         <div className="flex h-14 items-center justify-between border-b border-border px-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold shadow-sm">
-              T
-            </div>
+            <Logo className="h-7 w-7" showText={false} />
             <div className="flex flex-col">
-              <span className="text-xs font-bold text-foreground tracking-tight">Taskly</span>
-              <span className="text-[10px] text-muted-foreground">Dexter Workspace</span>
+              <span className="text-sm font-extrabold text-foreground tracking-tight">Taskly</span>
+              <span className="text-[10px] font-medium text-muted-foreground">
+                {user?.name ? `${user.name.split(' ')[0]}'s Workspace` : 'Personal Workspace'}
+              </span>
             </div>
           </div>
 

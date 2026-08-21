@@ -185,7 +185,11 @@ export const NotificationTypeEnum = z.enum([
   'mentioned', 
   'invite_accepted',
   'project_request',
-  'task_created'
+  'task_created',
+  'comment_added',
+  'tags_changed',
+  'description_changed',
+  'assignee_changed'
 ]);
 export type NotificationType = z.infer<typeof NotificationTypeEnum>;
 

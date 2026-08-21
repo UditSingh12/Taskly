@@ -44,35 +44,45 @@ const toTask = (doc: any): Task => {
 
 export class TaskService {
   static async getTasks(userId: string, filter?: TaskQueryFilter): Promise<Task[]> {
+    const user = await UserModel.findById(userId);
+    if (!user) throw new AppError(401, 'User not found');
+
     const query: mongoose.FilterQuery<any> = {};
+    const andConditions: any[] = [];
 
-    if (filter?.status) {
-      query.status = filter.status;
+    // Access control: Non-admins can only see their own tasks, assigned tasks, or tasks in their projects
+    if (user.role !== 'admin') {
+      const userProjects = await ProjectModel.find({ members: new mongoose.Types.ObjectId(userId) }).select('_id');
+      const projectIds = userProjects.map(p => p._id);
+      
+      andConditions.push({
+        $or: [
+          { owner: new mongoose.Types.ObjectId(userId) },
+          { assignee: new mongoose.Types.ObjectId(userId) },
+          { projectId: { $in: projectIds } }
+        ]
+      });
     }
 
-    if (filter?.priority) {
-      query.priority = filter.priority;
-    }
-
-    if (filter?.tag) {
-      query.tags = { $in: [filter.tag] };
-    }
-
-    if (filter?.projectId) {
-      query.projectId = new mongoose.Types.ObjectId(filter.projectId);
-    }
-    
-    if (filter?.assigneeId) {
-      query.assignee = new mongoose.Types.ObjectId(filter.assigneeId);
-    }
+    if (filter?.status) query.status = filter.status;
+    if (filter?.priority) query.priority = filter.priority;
+    if (filter?.tag) query.tags = { $in: [filter.tag] };
+    if (filter?.projectId) query.projectId = new mongoose.Types.ObjectId(filter.projectId);
+    if (filter?.assigneeId) query.assignee = new mongoose.Types.ObjectId(filter.assigneeId);
 
     if (filter?.search) {
       const searchRegex = new RegExp(filter.search.trim(), 'i');
-      query.$or = [
-        { title: searchRegex },
-        { description: searchRegex },
-        { tags: { $in: [searchRegex] } },
-      ];
+      andConditions.push({
+        $or: [
+          { title: searchRegex },
+          { description: searchRegex },
+          { tags: { $in: [searchRegex] } },
+        ]
+      });
+    }
+
+    if (andConditions.length > 0) {
+      query.$and = andConditions;
     }
 
     const tasks = await TaskModel.find(query)
@@ -303,37 +313,49 @@ export class TaskService {
                 updatedTask._id.toString()
             );
         }
+        
+        // Also notify everyone else about the assignment change
+        await NotificationService.notifyProjectMembers(
+            updatedTask.projectId?.toString() || null,
+            userId,
+            'assignee_changed',
+            `${user.name} reassigned task "${updatedTask.title}"`,
+            updatedTask._id.toString(),
+            updatedTask.assignee?._id?.toString()
+        );
     }
 
     if (input.status && input.status !== task.status) {
-        if (updatedTask.assignee && updatedTask.assignee._id.toString() !== userId) {
-            await NotificationService.createNotification(
-                updatedTask.assignee._id.toString(),
-                'status_changed',
-                `Status of task "${updatedTask.title}" was changed to ${input.status}`,
-                userId,
-                updatedTask._id.toString()
-            );
-        }
-
-        // Notify project members if a task was completed
-        if (input.status === 'completed' && updatedTask.projectId) {
-            const project = await ProjectModel.findById(updatedTask.projectId);
-            if (project && project.members) {
-                for (const memberId of project.members) {
-                    const memberIdStr = memberId.toString();
-                    if (memberIdStr !== userId && memberIdStr !== updatedTask.assignee?._id?.toString()) {
-                        await NotificationService.createNotification(
-                            memberIdStr,
-                            'status_changed',
-                            `Task "${updatedTask.title}" in ${project.name} was completed by ${user.name}`,
-                            userId,
-                            updatedTask._id.toString()
-                        );
-                    }
-                }
-            }
-        }
+        await NotificationService.notifyProjectMembers(
+            updatedTask.projectId?.toString() || null,
+            userId,
+            'status_changed',
+            `${user.name} changed the status of task "${updatedTask.title}" to ${input.status.replace('_', ' ')}`,
+            updatedTask._id.toString(),
+            updatedTask.assignee?._id?.toString()
+        );
+    }
+    
+    if (input.tags && JSON.stringify(input.tags) !== JSON.stringify(task.tags)) {
+        await NotificationService.notifyProjectMembers(
+            updatedTask.projectId?.toString() || null,
+            userId,
+            'tags_changed',
+            `${user.name} updated the tags on task "${updatedTask.title}"`,
+            updatedTask._id.toString(),
+            updatedTask.assignee?._id?.toString()
+        );
+    }
+    
+    if (input.description !== undefined && input.description !== task.description) {
+        await NotificationService.notifyProjectMembers(
+            updatedTask.projectId?.toString() || null,
+            userId,
+            'description_changed',
+            `${user.name} updated the description of task "${updatedTask.title}"`,
+            updatedTask._id.toString(),
+            updatedTask.assignee?._id?.toString()
+        );
     }
 
     return toTask(updatedTask);
@@ -372,8 +394,24 @@ export class TaskService {
       const user = await UserModel.findById(userId);
       if (!user) throw new AppError(401, 'User not found');
       
-    // Reordering is generally allowed for anyone in the shared board,
-    // but in a strict org we might restrict it. Let's allow it for everyone for now.
+    const taskIds = input.tasks.map(t => t.id);
+    const tasksToUpdate = await TaskModel.find({ _id: { $in: taskIds } });
+
+    // Access Control Validation for reordering
+    if (user.role !== 'admin') {
+      const userProjects = await ProjectModel.find({ members: new mongoose.Types.ObjectId(userId) }).select('_id');
+      const projectIds = userProjects.map(p => p._id.toString());
+      
+      for (const task of tasksToUpdate) {
+        const isOwner = task.owner.toString() === userId;
+        const isAssignee = task.assignee && task.assignee.toString() === userId;
+        const isProjectMember = task.projectId && projectIds.includes(task.projectId.toString());
+        
+        if (!isOwner && !isAssignee && !isProjectMember) {
+          throw new AppError(403, 'You do not have permission to reorder or edit one or more of these tasks.');
+        }
+      }
+    }
 
     const bulkOps = input.tasks.map((item: ReorderItem) => {
       return {
@@ -393,9 +431,24 @@ export class TaskService {
 
     if (bulkOps.length > 0) {
       await TaskModel.bulkWrite(bulkOps);
+
+      // Check for status changes and trigger notifications
+      for (const item of input.tasks) {
+        const oldTask = tasksToUpdate.find(t => t._id.toString() === item.id);
+        if (oldTask && item.status && item.status !== oldTask.status) {
+          await NotificationService.notifyProjectMembers(
+            oldTask.projectId?.toString() || null,
+            userId,
+            'status_changed',
+            `${user.name} moved task "${oldTask.title}" to ${item.status.replace('_', ' ')}`,
+            oldTask._id.toString(),
+            oldTask.assignee?.toString()
+          );
+        }
+      }
     }
 
-    const updatedTasks = await TaskModel.find()
+    const updatedTasks = await TaskModel.find({ _id: { $in: taskIds } })
         .populate('assignee', 'name avatarColor avatarUrl')
         .sort({ status: 1, order: 1 });
 

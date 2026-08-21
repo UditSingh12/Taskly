@@ -168,6 +168,7 @@ class ApiClient {
     if (filter?.search) query.append('search', filter.search);
     if (filter?.tag) query.append('tag', filter.tag);
     if (filter?.projectId) query.append('projectId', filter.projectId);
+    if (filter?.assigneeId) query.append('assigneeId', filter.assigneeId);
 
     const queryString = query.toString() ? `?${query.toString()}` : '';
     return this.request<{ tasks: Task[] }>(`/tasks${queryString}`);
@@ -299,6 +300,10 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify({ prompt }),
     });
+  }
+
+  async getAiGreeting(timeBlock: string): Promise<{ greeting: string, quote: string }> {
+    return this.request<{ greeting: string, quote: string }>(`/ai/greeting?timeBlock=${timeBlock}`);
   }
 }
 

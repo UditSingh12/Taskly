@@ -23,6 +23,7 @@ import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Avatar } from '@/components/ui/Avatar';
 import { AuthModal } from '@/components/auth/AuthModal';
+import { Logo } from '@/components/ui/Logo';
 
 export default function LandingPage() {
   const router = useRouter();
@@ -75,14 +76,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Logo */}
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground text-background font-bold shadow-sm">
-              <Layers className="h-4 w-4" />
-            </div>
-            <span className="text-lg font-bold tracking-tight text-foreground">
-              Taskly
-            </span>
-          </div>
+          <Logo className="h-7 w-7" />
 
           {/* Center Links */}
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
@@ -370,8 +364,7 @@ export default function LandingPage() {
       <footer className="border-t border-border bg-card py-8 text-center text-xs text-muted-foreground">
         <div className="mx-auto max-w-7xl px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 font-semibold text-foreground">
-            <Layers className="h-4 w-4" />
-            <span>Taskly</span>
+            <Logo className="h-5 w-5" />
           </div>
           <p>© 2026 Taskly. All rights reserved.</p>
         </div>

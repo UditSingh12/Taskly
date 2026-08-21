@@ -56,34 +56,33 @@ export function AiTaskCreator({ onTaskCreated }: AiTaskCreatorProps) {
   return (
     <div className="relative w-full max-w-2xl mx-auto mb-8">
       <form onSubmit={handleSubmit}>
-      <div className="relative group">
-        <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200 animate-gradient-xy"></div>
-        <div className="relative flex items-center bg-white/10 dark:bg-black/40 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl overflow-hidden p-1.5 shadow-2xl transition-all duration-300">
-          <div className="px-3 text-indigo-400 group-hover:text-indigo-300 transition-colors duration-200">
-            {isParsing ? (
-              <div className="h-5 w-5 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin" />
-            ) : (
-              <Sparkles className="h-5 w-5 animate-pulse" />
-            )}
-          </div>
-          <input
-            type="text"
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            disabled={isParsing}
-            placeholder="Ask AI to create a task, check teammates, or assign a project..."
-            className="flex-1 h-12 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-50"
-          />
-          <Button 
-            type="submit" 
-            isLoading={isParsing} 
-            disabled={!prompt.trim() || isParsing}
-            className="h-10 rounded-xl px-5 gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 border-0 shadow-md hover:shadow-lg hover:shadow-indigo-500/25 transition-all duration-300 font-medium cursor-pointer"
-          >
-            <span>Ask AI</span>
-            <ArrowRight className="h-4 w-4" />
-          </Button>
+      <div className="relative group max-w-2xl mx-auto flex items-center bg-zinc-100 dark:bg-[#2A2A2A] border border-zinc-200 dark:border-zinc-700/50 rounded-2xl p-1.5 shadow-sm transition-all duration-300 focus-within:ring-2 focus-within:ring-zinc-300 dark:focus-within:ring-zinc-700">
+        <div className="px-3 text-zinc-400">
+          {isParsing ? (
+            <div className="h-5 w-5 rounded-full border-2 border-zinc-400 border-t-transparent animate-spin" />
+          ) : (
+            <Sparkles className="h-5 w-5" />
+          )}
         </div>
+        <input
+          suppressHydrationWarning
+          type="text"
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          disabled={isParsing}
+          placeholder="Ask AI to create a task, check teammates, or assign a project..."
+          className="flex-1 h-12 bg-transparent text-sm text-zinc-800 dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:outline-none disabled:opacity-50"
+        />
+        <Button 
+          suppressHydrationWarning
+          type="submit" 
+          isLoading={isParsing} 
+          disabled={!prompt.trim() || isParsing}
+          className="h-10 rounded-xl px-5 gap-2 bg-zinc-200 dark:bg-[#3F3F3F] text-zinc-800 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-[#4F4F4F] border-0 transition-colors font-medium cursor-pointer"
+        >
+          <span>Ask AI</span>
+          <ArrowRight className="h-4 w-4" />
+        </Button>
       </div>
       </form>
       
