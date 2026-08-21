@@ -56,6 +56,21 @@ export default function LandingPage() {
     }
   };
 
+  const handleDemoLogin = async (demoEmail: string, demoPass: string) => {
+    setEmail(demoEmail);
+    setPassword(demoPass);
+    setAuthError(null);
+    setIsSubmitting(true);
+    try {
+      await login({ email: demoEmail, password: demoPass });
+      router.push('/dashboard/today');
+    } catch (err: any) {
+      setAuthError(err.message || 'Demo authentication failed');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Preview Kanban state for interactive demo
   const [previewTasks, setPreviewTasks] = React.useState([
     { id: '1', title: 'Write API Documentation', status: 'todo', tag: 'Deployment', date: '29 Jul', assignee: 'Admin' },
@@ -157,12 +172,49 @@ export default function LandingPage() {
               </div>
             )}
 
+            {/* Quick Demo Access Bar */}
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-primary flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Reviewer Demo Mode
+                </span>
+                <span className="text-[10px] text-muted-foreground font-medium">1-Click Sign In</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  suppressHydrationWarning
+                  onClick={() => handleDemoLogin('admin@taskly.in', 'Admin@123')}
+                  disabled={isSubmitting}
+                  className="flex flex-col items-start p-2 rounded-lg bg-card border border-border/80 hover:border-primary/50 text-left transition-all hover:shadow-sm"
+                >
+                  <span className="text-[11px] font-bold text-foreground flex items-center gap-1">
+                    👑 Demo Admin
+                  </span>
+                  <span className="text-[9px] text-muted-foreground font-mono">admin@taskly.in</span>
+                </button>
+                <button
+                  type="button"
+                  suppressHydrationWarning
+                  onClick={() => handleDemoLogin('member@taskly.in', 'Member@123')}
+                  disabled={isSubmitting}
+                  className="flex flex-col items-start p-2 rounded-lg bg-card border border-border/80 hover:border-emerald-500/50 text-left transition-all hover:shadow-sm"
+                >
+                  <span className="text-[11px] font-bold text-foreground flex items-center gap-1">
+                    👤 Demo Member
+                  </span>
+                  <span className="text-[9px] text-muted-foreground font-mono">member@taskly.in</span>
+                </button>
+              </div>
+            </div>
+
             {/* Email/Password Form */}
             <form onSubmit={handleAuthSubmit} className="space-y-3.5 pt-1">
               <Input
                 label="Work Email"
                 type="email"
-                placeholder="alex@company.com"
+                placeholder="admin@taskly.in"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 icon={<Mail className="h-4 w-4" />}
@@ -198,8 +250,8 @@ export default function LandingPage() {
               </Button>
             </form>
 
-            <p className="text-center text-[11px] text-muted-foreground/80 leading-normal pt-4">
-              Need an account? Contact your administrator for an invite.
+            <p className="text-center text-[11px] text-muted-foreground/80 leading-normal pt-2">
+              Default password: <span className="font-mono text-foreground font-medium">Admin@123</span> / <span className="font-mono text-foreground font-medium">Member@123</span>
             </p>
           </motion.div>
         </div>

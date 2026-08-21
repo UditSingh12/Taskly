@@ -49,6 +49,22 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
   };
 
+  const handleDemoLogin = async (demoEmail: string, demoPass: string) => {
+    setEmail(demoEmail);
+    setPassword(demoPass);
+    setError(null);
+    setIsLoading(true);
+    try {
+      await login({ email: demoEmail, password: demoPass });
+      onClose();
+      router.push('/dashboard/today');
+    } catch (err: any) {
+      setError(err.message || 'Demo authentication failed.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -80,16 +96,53 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           </button>
 
           {/* Header */}
-          <div className="text-center mb-6">
+          <div className="text-center mb-5">
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <Sparkles className="h-6 w-6" />
             </div>
             <h2 className="text-xl font-bold tracking-tight text-foreground">
               Welcome back to Taskly
             </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-              Enter your credentials to access your workspace.
+            <p className="text-xs text-muted-foreground mt-1">
+              Enter your credentials or use 1-click demo access below.
             </p>
+          </div>
+
+          {/* Quick Demo Access Bar */}
+          <div className="mb-4 rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-primary flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5" />
+                Reviewer Demo Mode
+              </span>
+              <span className="text-[10px] text-muted-foreground font-medium">1-Click Sign In</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                suppressHydrationWarning
+                onClick={() => handleDemoLogin('admin@taskly.in', 'Admin@123')}
+                disabled={isLoading}
+                className="flex flex-col items-start p-2 rounded-lg bg-card border border-border/80 hover:border-primary/50 text-left transition-all hover:shadow-sm"
+              >
+                <span className="text-[11px] font-bold text-foreground flex items-center gap-1">
+                  👑 Demo Admin
+                </span>
+                <span className="text-[9px] text-muted-foreground font-mono">admin@taskly.in</span>
+              </button>
+              <button
+                type="button"
+                suppressHydrationWarning
+                onClick={() => handleDemoLogin('member@taskly.in', 'Member@123')}
+                disabled={isLoading}
+                className="flex flex-col items-start p-2 rounded-lg bg-card border border-border/80 hover:border-emerald-500/50 text-left transition-all hover:shadow-sm"
+              >
+                <span className="text-[11px] font-bold text-foreground flex items-center gap-1">
+                  👤 Demo Member
+                </span>
+                <span className="text-[9px] text-muted-foreground font-mono">member@taskly.in</span>
+              </button>
+            </div>
           </div>
 
           {/* Error Alert */}
@@ -101,11 +154,11 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           )}
 
           {/* Auth Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3.5">
             <Input
               label="Work Email"
               type="email"
-              placeholder="alex@company.com"
+              placeholder="admin@taskly.in"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               icon={<Mail className="h-4 w-4" />}
