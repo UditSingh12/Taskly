@@ -9,18 +9,39 @@ try {
   // Ignore if custom DNS cannot be configured in restricted environment
 }
 
+let cached = (global as any).mongoose;
+
+if (!cached) {
+  cached = (global as any).mongoose = { conn: null, promise: null };
+}
+
 export const connectDB = async (): Promise<void> => {
-  try {
-    const conn = await mongoose.connect(env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 8000,
-    });
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
-  } catch (error) {
-    console.error('❌ Failed to connect to MongoDB:', error);
-    if (env.NODE_ENV === 'production') {
-      process.exit(1);
-    } else {
-      console.warn('⚠️ Running server with retry on requests');
-    }
+  if (cached.conn) {
+    return cached.conn;
   }
+
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 8000,
+    }).then((mongoose) => {
+      console.log(`✅ MongoDB Connected: ${mongoose.connection.host}`);
+      return mongoose;
+    }).catch((error) => {
+      console.error('❌ Failed to connect to MongoDB:', error);
+      cached.promise = null;
+      if (env.NODE_ENV === 'production') {
+        process.exit(1);
+      }
+      throw error;
+    });
+  }
+
+  try {
+    cached.conn = await cached.promise;
+  } catch (e) {
+    cached.promise = null;
+    throw e;
+  }
+
+  return cached.conn;
 };
