@@ -57,33 +57,33 @@ export function Header({
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex flex-col border-b border-border bg-background/80 backdrop-blur-md">
+      <header className="sticky top-0 z-30 flex flex-col border-b border-border bg-background/80 backdrop-blur-md w-full max-w-full overflow-hidden">
       {/* Top Navbar */}
-      <div className="flex h-14 items-center justify-between px-4 sm:px-6">
-        <div className="flex items-center gap-3">
+      <div className="flex h-14 items-center justify-between px-3 sm:px-6 gap-2 w-full max-w-full">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           {onToggleSidebar && (
             <button
               suppressHydrationWarning
               onClick={onToggleSidebar}
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary lg:hidden"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary lg:hidden shrink-0"
             >
               <Menu className="h-5 w-5" />
             </button>
           )}
 
-          <div className="flex items-center gap-2">
-            <h1 className="text-sm font-semibold text-foreground tracking-tight">
+          <div className="flex items-center gap-1.5 sm:gap-2 truncate">
+            <h1 className="text-sm font-semibold text-foreground tracking-tight truncate">
               Tasks
             </h1>
-            <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+            <span className="hidden xs:inline-block rounded-full bg-secondary px-2 py-0.5 text-[10px] sm:text-[11px] font-medium text-muted-foreground shrink-0">
               Workspace
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {/* Real-time Active Users Presence Avatars */}
-          <div className="relative">
+          <div className="relative hidden md:block">
             <button
               suppressHydrationWarning
               onClick={() => setShowActiveUsersDropdown(!showActiveUsersDropdown)}
@@ -208,31 +208,31 @@ export function Header({
       </div>
 
       {/* Filter and View Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-2 border-t border-border/50 bg-secondary/20">
-        <div className="flex items-center gap-2 flex-1 max-w-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-6 py-2 border-t border-border/50 bg-secondary/20 w-full max-w-full">
+        <div className="flex items-center gap-2 flex-1 min-w-[140px] max-w-sm">
           {/* Search bar */}
           <div className="relative w-full">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <input
               suppressHydrationWarning
               type="text"
-              placeholder="Search tasks, tags, assignees (⌘F)..."
+              placeholder="Search (⌘F)..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="h-8 w-full rounded-xl border border-border bg-background pl-8 pr-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+              className="h-8 w-full rounded-xl border border-border bg-background pl-8 pr-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
             />
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Status Filter */}
           <select
             suppressHydrationWarning
             value={selectedStatus || ''}
             onChange={(e) => onStatusChange((e.target.value as TaskStatus) || undefined)}
-            className="h-8 rounded-xl border border-border bg-background px-2.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+            className="h-8 rounded-xl border border-border bg-background px-2 text-[11px] sm:text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer max-w-[110px] sm:max-w-none"
           >
-            <option value="">All Statuses</option>
+            <option value="">Status</option>
             <option value="todo">To Do</option>
             <option value="doing">Doing</option>
             <option value="completed">Completed</option>
@@ -244,12 +244,12 @@ export function Header({
             suppressHydrationWarning
             value={selectedPriority || ''}
             onChange={(e) => onPriorityChange((e.target.value as TaskPriority) || undefined)}
-            className="h-8 rounded-xl border border-border bg-background px-2.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+            className="h-8 rounded-xl border border-border bg-background px-2 text-[11px] sm:text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer max-w-[110px] sm:max-w-none hidden sm:block"
           >
-            <option value="">All Priorities</option>
-            <option value="high">High Priority</option>
-            <option value="medium">Medium Priority</option>
-            <option value="low">Low Priority</option>
+            <option value="">Priority</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
           </select>
 
           {/* View Switcher: Board vs Table */}

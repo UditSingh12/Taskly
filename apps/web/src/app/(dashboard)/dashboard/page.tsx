@@ -135,7 +135,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen w-full max-w-full overflow-x-hidden">
       {/* Top Header */}
       <Header
         onToggleSidebar={toggleSidebar}
@@ -152,74 +152,74 @@ export default function DashboardPage() {
 
       {/* Project Banner when a specific project is selected */}
       {selectedProject && (
-        <div className="border-b border-border bg-card/60 px-4 sm:px-8 py-4">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="border-b border-border bg-card/60 px-3 sm:px-8 py-3 sm:py-4 w-full">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
             <div className="flex items-center gap-3">
               <div
-                className="h-10 w-10 rounded-xl flex items-center justify-center text-white shadow-sm"
+                className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl flex items-center justify-center text-white shadow-sm shrink-0"
                 style={{ backgroundColor: selectedProject.color || '#4F46E5' }}
               >
-                <Folder className="h-5 w-5" />
+                <Folder className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
-              <div>
-                <h2 className="text-base font-bold text-foreground tracking-tight">
+              <div className="min-w-0">
+                <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight truncate">
                   {selectedProject.name}
                 </h2>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground truncate">
                   {selectedProject.description || 'Project Workspace'}
                 </p>
               </div>
             </div>
 
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-28 sm:w-36 h-2 bg-secondary rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-primary transition-all duration-300 rounded-full"
-                      style={{ width: `${projectStats.percent}%` }}
-                    />
-                  </div>
-                  <span className="text-xs font-bold text-foreground">
-                    {projectStats.percent}%
-                  </span>
-                  <span className="text-[11px] text-muted-foreground">
-                    ({projectStats.completed}/{projectStats.total})
-                  </span>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-20 sm:w-36 h-2 bg-secondary rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary transition-all duration-300 rounded-full"
+                    style={{ width: `${projectStats.percent}%` }}
+                  />
                 </div>
+                <span className="text-xs font-bold text-foreground">
+                  {projectStats.percent}%
+                </span>
+                <span className="text-[10px] sm:text-[11px] text-muted-foreground">
+                  ({projectStats.completed}/{projectStats.total})
+                </span>
+              </div>
 
-                {user?.role === 'admin' && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setMembersModalOpen(true)}
-                    className="h-8 shadow-sm text-xs relative"
-                  >
-                    <Users className="h-3.5 w-3.5 mr-1" />
-                    Manage Members
-                    {selectedProject.pendingMemberIds && selectedProject.pendingMemberIds.length > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-destructive"></span>
-                      </span>
-                    )}
-                  </Button>
-                )}
-
+              {user?.role === 'admin' && (
                 <Button
                   size="sm"
-                  onClick={() => handleOpenCreateModal('todo')}
-                  className="h-8 shadow-sm text-xs"
+                  variant="outline"
+                  onClick={() => setMembersModalOpen(true)}
+                  className="h-8 shadow-sm text-xs relative"
                 >
-                  <Plus className="h-3.5 w-3.5 mr-1" />
-                  Add to Project
+                  <Users className="h-3.5 w-3.5 mr-1" />
+                  <span className="hidden xs:inline">Manage </span>Members
+                  {selectedProject.pendingMemberIds && selectedProject.pendingMemberIds.length > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-destructive"></span>
+                    </span>
+                  )}
                 </Button>
-              </div>
+              )}
+
+              <Button
+                size="sm"
+                onClick={() => handleOpenCreateModal('todo')}
+                className="h-8 shadow-sm text-xs"
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" />
+                Add Task
+              </Button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Main Workspace Canvas */}
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto flex flex-col">
+      <main className="flex-1 p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto flex flex-col min-w-0">
         {!hasAccess ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
             <div className="w-16 h-16 bg-secondary/50 text-muted-foreground rounded-2xl flex items-center justify-center mb-6">

@@ -113,18 +113,18 @@ export function PremiumGreeting() {
   }
 
   return (
-    <div className="w-full flex flex-col items-center justify-center py-6 sm:py-10 text-center">
+    <div className="w-full flex flex-col items-center justify-center py-4 sm:py-8 px-3 text-center max-w-full overflow-hidden">
       
       {/* Title with Claude-style minimal aesthetic */}
-      <div className="flex items-center justify-center gap-3 sm:gap-4 mb-3">
-        <Icon className={`w-10 h-10 sm:w-12 sm:h-12 motion-safe:animate-[pulse_4s_ease-in-out_infinite] ${iconColor}`} strokeWidth={1.5} />
-        <h1 className="text-5xl sm:text-6xl font-serif text-slate-800 dark:text-[#E6E6E6] tracking-tight leading-tight">
+      <div className="flex items-center justify-center gap-2 sm:gap-4 mb-2 max-w-full">
+        <Icon className={`w-7 h-7 sm:w-10 sm:h-10 shrink-0 motion-safe:animate-[pulse_4s_ease-in-out_infinite] ${iconColor}`} strokeWidth={1.5} />
+        <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-serif text-slate-800 dark:text-[#E6E6E6] tracking-tight leading-snug break-words">
           <Typewriter text={greetingData.greeting} delay={100} speed={40} />
         </h1>
       </div>
 
       {/* Quote */}
-      <p className="text-muted-foreground font-medium text-xl sm:text-2xl font-serif max-w-3xl mx-auto">
+      <p className="text-muted-foreground font-medium text-xs sm:text-base md:text-xl font-serif max-w-2xl mx-auto px-2 leading-relaxed">
         <Typewriter text={greetingData.quote} delay={1500} speed={30} />
       </p>
       

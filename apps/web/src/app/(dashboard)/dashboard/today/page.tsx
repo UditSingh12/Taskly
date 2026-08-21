@@ -44,7 +44,7 @@ export default function TodayPage() {
   const inProgressTasks = tasks.filter(t => t.status === 'doing' && !overdueTasks.includes(t) && !dueTodayTasks.includes(t));
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex min-h-screen flex-col w-full max-w-full overflow-x-hidden">
       <Header
         currentView={view}
         onViewChange={setView}
@@ -53,12 +53,12 @@ export default function TodayPage() {
         onPriorityChange={() => {}}
         onStatusChange={() => {}}
       />
-      <div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8 space-y-8 max-w-7xl mx-auto w-full">
+      <div className="flex-1 overflow-x-hidden p-3 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-7xl mx-auto w-full min-w-0">
         <PremiumGreeting />
         
-        <div className="text-center mt-2 mb-8">
-          <h1 className="text-2xl font-bold tracking-tight mb-2">My Day Tasks</h1>
-          <p className="text-muted-foreground mb-6 text-sm">Focus on what matters today. Create tasks instantly using AI.</p>
+        <div className="text-center mt-2 mb-6 sm:mb-8 px-2">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight mb-1 sm:mb-2">My Day Tasks</h1>
+          <p className="text-muted-foreground mb-4 sm:mb-6 text-xs sm:text-sm">Focus on what matters today. Create tasks instantly using AI.</p>
           <AiTaskCreator onTaskCreated={fetchTasks} />
         </div>
 

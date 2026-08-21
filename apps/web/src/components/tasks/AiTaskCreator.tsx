@@ -54,14 +54,14 @@ export function AiTaskCreator({ onTaskCreated }: AiTaskCreatorProps) {
   };
 
   return (
-    <div className="relative w-full max-w-2xl mx-auto mb-8">
+    <div className="relative w-full max-w-2xl mx-auto mb-6 px-1 sm:px-0">
       <form onSubmit={handleSubmit}>
-      <div className="relative group max-w-2xl mx-auto flex items-center bg-zinc-100 dark:bg-[#2A2A2A] border border-zinc-200 dark:border-zinc-700/50 rounded-2xl p-1.5 shadow-sm transition-all duration-300 focus-within:ring-2 focus-within:ring-zinc-300 dark:focus-within:ring-zinc-700">
-        <div className="px-3 text-zinc-400">
+      <div className="relative group max-w-2xl mx-auto flex items-center bg-zinc-100 dark:bg-[#2A2A2A] border border-zinc-200 dark:border-zinc-700/50 rounded-2xl p-1 shadow-sm transition-all duration-300 focus-within:ring-2 focus-within:ring-zinc-300 dark:focus-within:ring-zinc-700">
+        <div className="px-2 sm:px-3 text-zinc-400">
           {isParsing ? (
-            <div className="h-5 w-5 rounded-full border-2 border-zinc-400 border-t-transparent animate-spin" />
+            <div className="h-4 w-4 sm:h-5 sm:w-5 rounded-full border-2 border-zinc-400 border-t-transparent animate-spin" />
           ) : (
-            <Sparkles className="h-5 w-5" />
+            <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
           )}
         </div>
         <input
@@ -70,18 +70,18 @@ export function AiTaskCreator({ onTaskCreated }: AiTaskCreatorProps) {
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           disabled={isParsing}
-          placeholder="Ask AI to create a task, check teammates, or assign a project..."
-          className="flex-1 h-12 bg-transparent text-sm text-zinc-800 dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:outline-none disabled:opacity-50"
+          placeholder="Ask AI to create a task or answer questions..."
+          className="flex-1 min-w-0 h-10 sm:h-12 bg-transparent text-xs sm:text-sm text-zinc-800 dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:outline-none disabled:opacity-50 pr-2"
         />
         <Button 
           suppressHydrationWarning
           type="submit" 
           isLoading={isParsing} 
           disabled={!prompt.trim() || isParsing}
-          className="h-10 rounded-xl px-5 gap-2 bg-zinc-200 dark:bg-[#3F3F3F] text-zinc-800 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-[#4F4F4F] border-0 transition-colors font-medium cursor-pointer"
+          className="h-9 sm:h-10 rounded-xl px-3 sm:px-5 gap-1.5 bg-zinc-200 dark:bg-[#3F3F3F] text-zinc-800 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-[#4F4F4F] border-0 transition-colors text-xs font-medium cursor-pointer shrink-0"
         >
-          <span>Ask AI</span>
-          <ArrowRight className="h-4 w-4" />
+          <span className="hidden sm:inline">Ask AI</span>
+          <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </Button>
       </div>
       </form>

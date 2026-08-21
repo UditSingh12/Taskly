@@ -38,7 +38,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-background w-full max-w-full overflow-x-hidden">
       {/* Sidebar with Projects integration */}
       <Sidebar
         isOpen={isOpen}
@@ -50,7 +50,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">{children}</div>
+      <div className="flex-1 flex flex-col min-w-0 w-full max-w-full overflow-x-hidden">{children}</div>
 
       {/* Create Project Modal */}
       <ProjectModal
