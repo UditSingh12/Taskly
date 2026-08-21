@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "cd ../../packages/shared-types && pnpm run build && cd ../../apps/api && tsup src/server.ts --format esm --clean --sourcemap --no-splitting",
+    "build": "cd ../../packages/shared-types && pnpm run build && cd ../../apps/api && tsup src/server.ts src/vercel.ts --format esm --clean --sourcemap --no-splitting && node -e \"const fs = require('fs'); if (!fs.existsSync('api')) fs.mkdirSync('api'); fs.copyFileSync('dist/vercel.mjs', 'api/index.js');\"",
     "start": "node dist/server.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
