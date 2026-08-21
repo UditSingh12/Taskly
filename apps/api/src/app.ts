@@ -11,8 +11,45 @@ import { AppError } from './utils/AppError.js';
 export const createApp = (): Express => {
   const app = express();
 
-  // Security headers
-  app.use(helmet());
+  // Trust proxy for rate limiting behind Vercel / Cloudflare
+  app.set('trust proxy', 1);
+
+  // CORS Configuration - place before helmet
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    env.FRONTEND_URL,
+  ].filter(Boolean);
+
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps, curl, server-to-server)
+        if (!origin) return callback(null, true);
+
+        if (
+          allowedOrigins.includes(origin) ||
+          origin.endsWith('.vercel.app') ||
+          origin.includes('localhost') ||
+          env.NODE_ENV === 'development'
+        ) {
+          callback(null, true);
+        } else {
+          callback(new AppError(403, `Origin ${origin} not allowed by CORS`));
+        }
+      },
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    })
+  );
+
+  // Security headers with crossOriginResourcePolicy allowing API consumption
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    })
+  );
 
   // Logging
   if (env.NODE_ENV !== 'test') {
@@ -26,34 +63,19 @@ export const createApp = (): Express => {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true }));
 
-  // CORS Configuration
-  const allowedOrigins = [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    env.FRONTEND_URL,
-  ].filter(Boolean);
+  // Root endpoint for health check & verification
+  app.get('/', (_req: Request, res: Response) => {
+    res.status(200).json({
+      name: 'Taskly API',
+      status: 'healthy',
+      version: '1.0.0',
+      timestamp: new Date().toISOString(),
+    });
+  });
 
-  app.use(
-    cors({
-      origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps, curl, or same-origin server requests)
-        if (!origin) return callback(null, true);
-
-        if (
-          allowedOrigins.includes(origin) ||
-          origin.endsWith('.vercel.app') ||
-          env.NODE_ENV === 'development'
-        ) {
-          callback(null, true);
-        } else {
-          callback(new AppError(403, `Origin ${origin} not allowed by CORS`));
-        }
-      },
-      credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    })
-  );
+  app.get('/health', (_req: Request, res: Response) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
 
   // Mount API routes
   app.use('/api', routes);
