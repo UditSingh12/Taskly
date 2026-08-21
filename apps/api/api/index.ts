@@ -1,5 +1,5 @@
-import { createApp } from '../src/app.js';
-import { connectDB } from '../src/config/db.js';
+import { createApp } from '../src/app';
+import { connectDB } from '../src/config/db';
 
 let appInstance: any;
 
