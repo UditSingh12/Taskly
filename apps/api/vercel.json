@@ -1,14 +1,4 @@
 {
   "version": 2,
-  "buildCommand": "pnpm run build",
-  "installCommand": "pnpm install",
-  "outputDirectory": ".",
-  "functions": {
-    "api/index.js": {
-      "maxDuration": 30
-    }
-  },
-  "routes": [
-    { "src": "/(.*)", "dest": "/api/index" }
-  ]
+  "buildCommand": "pnpm run build"
 }
