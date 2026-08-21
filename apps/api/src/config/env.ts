@@ -15,9 +15,13 @@ const envSchema = z.object({
 const parseResult = envSchema.safeParse(process.env);
 
 if (!parseResult.success) {
-  console.error('❌ Invalid environment variables configuration:');
-  console.error(JSON.stringify(parseResult.error.format(), null, 2));
-  process.exit(1);
+  const errorMsg = '❌ Invalid environment variables configuration:\n' + JSON.stringify(parseResult.error.format(), null, 2);
+  console.error(errorMsg);
+  if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    process.exit(1);
+  } else {
+    throw new Error(errorMsg);
+  }
 }
 
 export const env = parseResult.data;
