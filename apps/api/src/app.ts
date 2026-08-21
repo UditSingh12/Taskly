@@ -59,7 +59,7 @@ export const createApp = (): Express => {
   app.use('/api', routes);
 
   // Handle 404
-  app.all('*', (req, _res, next) => {
+  app.all('*', (req: express.Request, _res: express.Response, next: express.NextFunction) => {
     next(new AppError(404, `Cannot find ${req.method} ${req.originalUrl} on this server`));
   });
 
