@@ -1,26 +1,39 @@
-FROM node:20-alpine
+# ── Build Stage ──────────────────────────────────────────────────────────────
+FROM node:20-alpine AS builder
 
 RUN apk add --no-cache libc6-compat
 
-# Enable corepack for pnpm version management
-RUN corepack enable
+WORKDIR /app
+
+# Use Docker-specific package.json (no workspace:* references, includes build tools)
+COPY package.prod.json package.json
+
+# Install all deps including build tools (tsup, typescript, @types)
+RUN npm install --ignore-scripts
+
+# Copy source files (tsconfig paths resolve @taskly/shared-types → src/_shared-types.ts)
+COPY tsconfig.json ./
+COPY tsup.config.ts ./
+COPY src ./src
+
+# Compile TypeScript → dist/server.js
+RUN npx tsup
+
+# ── Runtime Stage ─────────────────────────────────────────────────────────────
+FROM node:20-alpine AS runner
+
+RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 
-# Copy package files for dependency installation
-COPY package.json ./
+# Only production package.json
+COPY package.prod.json package.json
 
-# Create a minimal lock-free install using npm (avoids pnpm workspace issues)
-# tsup and typescript are needed to build; zod is needed at runtime
-RUN npm install --ignore-scripts
+# Install only production dependencies (no devDeps)
+RUN npm install --omit=dev --ignore-scripts
 
-# Copy all source files (Docker context = apps/api)
-COPY src ./src
-COPY tsconfig.json ./
-COPY tsup.config.ts ./
-
-# Build the server (tsup.config.ts resolves @taskly/shared-types via tsconfig paths → src/_shared-types.ts)
-RUN npx tsup
+# Copy compiled output from builder
+COPY --from=builder /app/dist ./dist
 
 ENV NODE_ENV=production
 ENV PORT=3000
