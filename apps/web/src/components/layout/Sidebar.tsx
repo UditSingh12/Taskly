@@ -86,6 +86,7 @@ export function Sidebar({
             </p>
             <Link
               href="/dashboard/today"
+              onClick={() => onClose && onClose()}
               className={`w-full flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium transition-colors ${
                 pathname === '/dashboard/today'
                   ? 'bg-secondary text-foreground font-semibold shadow-sm'
@@ -100,6 +101,7 @@ export function Sidebar({
             <button
               suppressHydrationWarning
               onClick={() => {
+                onClose && onClose();
                 if (pathname !== '/dashboard') {
                   router.push('/dashboard');
                 } else {
@@ -120,6 +122,7 @@ export function Sidebar({
             {user?.role === 'admin' && (
               <Link
                 href="/dashboard/admin"
+                onClick={() => onClose && onClose()}
                 className={`w-full flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium transition-colors ${
                   pathname.includes('/admin')
                     ? 'bg-secondary text-foreground font-semibold shadow-sm'
@@ -143,7 +146,10 @@ export function Sidebar({
               {onOpenNewProjectModal && (
                 <button
                   suppressHydrationWarning
-                  onClick={onOpenNewProjectModal}
+                  onClick={() => {
+                    onClose && onClose();
+                    onOpenNewProjectModal();
+                  }}
                   className="p-1 text-muted-foreground hover:text-foreground rounded-lg hover:bg-secondary transition-colors"
                   title="Create Project"
                 >
@@ -158,7 +164,10 @@ export function Sidebar({
                 {onOpenNewProjectModal && (
                   <button
                     suppressHydrationWarning
-                    onClick={onOpenNewProjectModal}
+                    onClick={() => {
+                      onClose && onClose();
+                      onOpenNewProjectModal();
+                    }}
                     className="mt-1 text-[11px] font-semibold text-primary hover:underline"
                   >
                     + Create one
@@ -174,6 +183,7 @@ export function Sidebar({
                       suppressHydrationWarning
                       key={p._id}
                       onClick={() => {
+                        onClose && onClose();
                         if (pathname !== '/dashboard') {
                           router.push('/dashboard');
                           onSelectProject && onSelectProject(p._id);

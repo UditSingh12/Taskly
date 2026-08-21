@@ -7,9 +7,11 @@ import { Header } from '@/components/layout/Header';
 import { AiTaskCreator } from '@/components/tasks/AiTaskCreator';
 import { PremiumGreeting } from '@/components/dashboard/PremiumGreeting';
 import { useAuth } from '@/lib/hooks/useAuth';
+import { useSidebar } from '@/lib/hooks/useSidebar';
 
 export default function TodayPage() {
   const { user } = useAuth();
+  const { toggle: toggleSidebar } = useSidebar();
   const [tasks, setTasks] = React.useState<Task[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [view, setView] = React.useState<'board' | 'table'>('board');
@@ -46,6 +48,7 @@ export default function TodayPage() {
   return (
     <div className="flex min-h-screen flex-col w-full max-w-full overflow-x-hidden">
       <Header
+        onToggleSidebar={toggleSidebar}
         currentView={view}
         onViewChange={setView}
         searchQuery=""

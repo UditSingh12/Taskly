@@ -15,13 +15,16 @@ import {
   UserPlus, 
   Ban,
   Activity,
-  Trash2
+  Trash2,
+  Menu
 } from 'lucide-react';
 import { formatFullDate, cn } from '@/lib/utils';
+import { useSidebar } from '@/lib/hooks/useSidebar';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
   const { user, isLoading: isAuthLoading } = useAuth();
+  const { toggle: toggleSidebar } = useSidebar();
   
   const [activeTab, setActiveTab] = React.useState<'team' | 'tasks' | 'audit'>('team');
   const [team, setTeam] = React.useState<User[]>([]);
@@ -146,11 +149,20 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-background p-6">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage team members, view all tasks, and monitor system activity.</p>
+    <div className="flex flex-col h-full bg-background p-4 sm:p-6 w-full max-w-full overflow-x-hidden">
+      <div className="flex items-center justify-between mb-6 sm:mb-8">
+        <div className="flex items-center gap-3">
+          <button
+            suppressHydrationWarning
+            onClick={toggleSidebar}
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary lg:hidden"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Admin Dashboard</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">Manage team members, view all tasks, and monitor system activity.</p>
+          </div>
         </div>
       </div>
 
