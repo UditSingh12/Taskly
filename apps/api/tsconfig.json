@@ -22,7 +22,10 @@
     "declarationMap": false,
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "paths": {
+      "@taskly/shared-types": ["./src/_shared-types.ts"]
+    }
   },
   "include": [
     "src/**/*"
