@@ -77,8 +77,9 @@ export const createApp = (): Express => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
-  // Mount API routes
+  // Mount API routes at both '/api' and '/' (handles direct container and Vercel stripped rewrites)
   app.use('/api', routes);
+  app.use('/', routes);
 
   // Handle 404
   app.all('*', (req: Request, _res: Response, next: NextFunction) => {

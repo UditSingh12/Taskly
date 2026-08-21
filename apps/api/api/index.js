@@ -318,11 +318,11 @@ __export(task_model_exports, {
   TaskModel: () => TaskModel
 });
 import mongoose5, { Schema as Schema4 } from "mongoose";
-var SubtaskSchema, TaskActivitySchema, TaskSchema, TaskModel;
+var SubtaskSchema2, TaskActivitySchema2, TaskSchema2, TaskModel;
 var init_task_model = __esm({
   "src/models/task.model.ts"() {
     "use strict";
-    SubtaskSchema = new Schema4(
+    SubtaskSchema2 = new Schema4(
       {
         id: { type: String, required: true },
         title: { type: String, required: true, trim: true },
@@ -330,7 +330,7 @@ var init_task_model = __esm({
       },
       { _id: false }
     );
-    TaskActivitySchema = new Schema4(
+    TaskActivitySchema2 = new Schema4(
       {
         type: { type: String, enum: ["status_change", "priority_change", "assignee_change", "created"], required: true },
         actorId: { type: String, required: true },
@@ -340,7 +340,7 @@ var init_task_model = __esm({
       },
       { _id: false }
     );
-    TaskSchema = new Schema4(
+    TaskSchema2 = new Schema4(
       {
         title: {
           type: String,
@@ -384,7 +384,7 @@ var init_task_model = __esm({
           index: true
         },
         subtasks: {
-          type: [SubtaskSchema],
+          type: [SubtaskSchema2],
           default: []
         },
         projectId: {
@@ -405,7 +405,7 @@ var init_task_model = __esm({
           index: true
         },
         activity: {
-          type: [TaskActivitySchema],
+          type: [TaskActivitySchema2],
           default: []
         }
       },
@@ -424,9 +424,9 @@ var init_task_model = __esm({
         }
       }
     );
-    TaskSchema.index({ owner: 1, status: 1, order: 1 });
-    TaskSchema.index({ owner: 1, projectId: 1 });
-    TaskModel = mongoose5.model("Task", TaskSchema);
+    TaskSchema2.index({ owner: 1, status: 1, order: 1 });
+    TaskSchema2.index({ owner: 1, projectId: 1 });
+    TaskModel = mongoose5.model("Task", TaskSchema2);
   }
 });
 
@@ -761,12 +761,186 @@ var aiParserLimiter = rateLimit({
   legacyHeaders: false
 });
 
+// src/_shared-types.ts
+import { z as z2 } from "zod";
+var ThemeEnum = z2.enum(["light", "dark"]);
+var RoleEnum = z2.enum(["admin", "member"]);
+var StatusEnum = z2.enum(["invited", "active", "deactivated"]);
+var UserSchema2 = z2.object({
+  _id: z2.string(),
+  name: z2.string().min(1).max(50),
+  email: z2.string().email(),
+  role: RoleEnum.default("member"),
+  status: StatusEnum.default("active"),
+  avatarColor: z2.string().regex(/^#[0-9A-Fa-f]{6}$/, "Must be a valid hex color"),
+  avatarUrl: z2.string().optional(),
+  theme: ThemeEnum.default("dark"),
+  lastActiveAt: z2.coerce.date().optional(),
+  createdAt: z2.coerce.date().optional(),
+  jobTitle: z2.string().max(100).optional()
+});
+var LoginUserSchema = z2.object({
+  email: z2.string().email("Please enter a valid email address"),
+  password: z2.string().min(1, "Password is required")
+});
+var AdminInviteSchema = z2.object({
+  email: z2.string().email("Please enter a valid email address"),
+  name: z2.string().min(1, "Name is required"),
+  jobTitle: z2.string().max(100).optional()
+});
+var AcceptInviteSchema = z2.object({
+  token: z2.string().min(1),
+  password: z2.string().min(6, "Password must be at least 6 characters long")
+});
+var UpdateThemeSchema = z2.object({
+  theme: ThemeEnum
+});
+var ChangePasswordSchema = z2.object({
+  oldPassword: z2.string().min(1, "Current password is required"),
+  newPassword: z2.string().min(6, "New password must be at least 6 characters long")
+});
+var ProjectSchema2 = z2.object({
+  _id: z2.string(),
+  name: z2.string().min(1, "Project name is required").max(100),
+  description: z2.string().max(1e3).optional(),
+  color: z2.string().regex(/^#[0-9A-Fa-f]{6}$/, "Must be a valid hex color").default("#4F46E5"),
+  icon: z2.string().default("folder"),
+  owner: z2.string(),
+  memberIds: z2.array(z2.string()).default([]),
+  pendingMemberIds: z2.array(z2.string()).default([]),
+  taskCount: z2.number().int().default(0),
+  completedTaskCount: z2.number().int().default(0),
+  createdAt: z2.coerce.date().optional(),
+  updatedAt: z2.coerce.date().optional()
+});
+var CreateProjectSchema = z2.object({
+  name: z2.string().min(1, "Project name is required").max(100),
+  description: z2.string().max(1e3).optional(),
+  color: z2.string().regex(/^#[0-9A-Fa-f]{6}$/, "Must be a valid hex color").optional(),
+  icon: z2.string().optional()
+});
+var UpdateProjectSchema = CreateProjectSchema.partial();
+var TaskStatusEnum = z2.enum(["todo", "doing", "completed", "on_hold"]);
+var TaskPriorityEnum = z2.enum(["low", "medium", "high"]);
+var SubtaskSchema = z2.object({
+  id: z2.string(),
+  title: z2.string().min(1),
+  completed: z2.boolean().default(false)
+});
+var TaskActivitySchema = z2.object({
+  type: z2.enum(["status_change", "priority_change", "assignee_change", "created"]),
+  actorId: z2.string(),
+  fromValue: z2.string().optional(),
+  toValue: z2.string().optional(),
+  timestamp: z2.coerce.date()
+});
+var TaskSchema = z2.object({
+  _id: z2.string(),
+  title: z2.string().min(1, "Title is required").max(200),
+  description: z2.string().max(5e3).optional(),
+  status: TaskStatusEnum.default("todo"),
+  assignmentStatus: z2.enum(["unassigned", "assigned", "pending_request"]).default("unassigned"),
+  priority: TaskPriorityEnum.default("medium"),
+  dueDate: z2.coerce.date().optional().nullable(),
+  tags: z2.array(z2.string().max(30)).default([]),
+  assignee: UserSchema2.pick({ _id: true, name: true, avatarColor: true, avatarUrl: true }).optional().nullable(),
+  subtasks: z2.array(SubtaskSchema).default([]),
+  projectId: z2.string().optional().nullable(),
+  owner: z2.string(),
+  order: z2.number().int().default(0),
+  activity: z2.array(TaskActivitySchema).default([]),
+  createdAt: z2.coerce.date().optional(),
+  updatedAt: z2.coerce.date().optional()
+});
+var CreateTaskSchema = z2.object({
+  title: z2.string().min(1, "Title is required").max(200),
+  description: z2.string().max(5e3).optional(),
+  status: TaskStatusEnum.default("todo"),
+  priority: TaskPriorityEnum.default("medium"),
+  dueDate: z2.coerce.date().optional().nullable(),
+  tags: z2.array(z2.string().max(30)).optional(),
+  assigneeId: z2.string().optional().nullable(),
+  subtasks: z2.array(SubtaskSchema).optional(),
+  projectId: z2.string().optional().nullable(),
+  order: z2.number().int().optional()
+});
+var AssignmentRequestStatusEnum = z2.enum(["pending", "approved", "rejected"]);
+var AssignmentRequestSchema = z2.object({
+  _id: z2.string(),
+  taskId: z2.string(),
+  requesterId: z2.string(),
+  requester: UserSchema2.pick({ _id: true, name: true, avatarColor: true, avatarUrl: true }).optional(),
+  status: AssignmentRequestStatusEnum.default("pending"),
+  createdAt: z2.coerce.date(),
+  updatedAt: z2.coerce.date().optional()
+});
+var CreateAssignmentRequestSchema = z2.object({
+  taskId: z2.string()
+});
+var NotificationTypeEnum = z2.enum([
+  "assigned",
+  "assignment_requested",
+  "assignment_approved",
+  "assignment_rejected",
+  "status_changed",
+  "mentioned",
+  "invite_accepted",
+  "project_request",
+  "task_created",
+  "comment_added",
+  "tags_changed",
+  "description_changed",
+  "assignee_changed"
+]);
+var NotificationSchema2 = z2.object({
+  _id: z2.string(),
+  userId: z2.string(),
+  type: NotificationTypeEnum,
+  taskId: z2.string().optional().nullable(),
+  actorId: z2.string().optional(),
+  message: z2.string(),
+  read: z2.boolean().default(false),
+  createdAt: z2.coerce.date()
+});
+var UpdateTaskSchema = CreateTaskSchema.partial();
+var ReorderItemSchema = z2.object({
+  id: z2.string(),
+  status: TaskStatusEnum,
+  order: z2.number().int()
+});
+var ReorderTasksSchema = z2.object({
+  tasks: z2.array(ReorderItemSchema).min(1)
+});
+var TaskQueryFilterSchema = z2.object({
+  status: TaskStatusEnum.optional(),
+  priority: TaskPriorityEnum.optional(),
+  search: z2.string().optional(),
+  tag: z2.string().optional(),
+  projectId: z2.string().optional(),
+  assigneeId: z2.string().optional()
+});
+var CommentSchema = z2.object({
+  _id: z2.string(),
+  taskId: z2.string(),
+  author: UserSchema2.pick({ _id: true, name: true, avatarColor: true, avatarUrl: true }),
+  body: z2.string().min(1).max(2e3),
+  createdAt: z2.coerce.date()
+});
+var CreateCommentSchema = z2.object({
+  body: z2.string().min(1, "Comment cannot be empty").max(2e3)
+});
+var AdminAuditLogSchema = z2.object({
+  _id: z2.string(),
+  adminId: z2.string(),
+  adminName: z2.string(),
+  action: z2.enum(["invite_sent", "invite_revoked", "member_deactivated", "member_promoted", "task_force_edited"]),
+  targetType: z2.enum(["user", "task"]),
+  targetId: z2.string(),
+  timestamp: z2.coerce.date(),
+  details: z2.any().optional()
+});
+
 // src/routes/auth.routes.ts
-import {
-  LoginUserSchema,
-  AcceptInviteSchema,
-  ChangePasswordSchema
-} from "@taskly/shared-types";
 var router = Router();
 router.post("/login", authLimiter, validateBody(LoginUserSchema), AuthController.login);
 router.post("/accept-invite", authLimiter, validateBody(AcceptInviteSchema), AuthController.acceptInvite);
@@ -788,7 +962,6 @@ var UserController = class {
 };
 
 // src/routes/user.routes.ts
-import { UpdateThemeSchema } from "@taskly/shared-types";
 var router2 = Router2();
 router2.patch("/me/theme", requireAuth, validateBody(UpdateThemeSchema), UserController.updateTheme);
 var user_routes_default = router2;
@@ -804,7 +977,7 @@ import mongoose7 from "mongoose";
 
 // src/models/audit-log.model.ts
 import mongoose6, { Schema as Schema5 } from "mongoose";
-var AdminAuditLogSchema = new Schema5(
+var AdminAuditLogSchema2 = new Schema5(
   {
     adminId: {
       type: String,
@@ -848,7 +1021,7 @@ var AdminAuditLogSchema = new Schema5(
     }
   }
 );
-var AdminAuditLogModel = mongoose6.model("AdminAuditLog", AdminAuditLogSchema);
+var AdminAuditLogModel = mongoose6.model("AdminAuditLog", AdminAuditLogSchema2);
 
 // src/services/task.service.ts
 init_notification_service();
@@ -1275,20 +1448,12 @@ var TaskController = class {
   });
 };
 
-// src/routes/task.routes.ts
-import {
-  CreateTaskSchema,
-  UpdateTaskSchema,
-  ReorderTasksSchema,
-  TaskQueryFilterSchema
-} from "@taskly/shared-types";
-
 // src/services/comment.service.ts
 import mongoose9 from "mongoose";
 
 // src/models/comment.model.ts
 import mongoose8, { Schema as Schema6 } from "mongoose";
-var CommentSchema = new Schema6(
+var CommentSchema2 = new Schema6(
   {
     taskId: {
       type: Schema6.Types.ObjectId,
@@ -1318,7 +1483,7 @@ var CommentSchema = new Schema6(
     }
   }
 );
-var CommentModel = mongoose8.model("Comment", CommentSchema);
+var CommentModel = mongoose8.model("Comment", CommentSchema2);
 
 // src/services/comment.service.ts
 init_task_model();
@@ -1376,15 +1541,12 @@ var CommentController = class {
   });
 };
 
-// src/routes/task.routes.ts
-import { CreateCommentSchema, CreateAssignmentRequestSchema } from "@taskly/shared-types";
-
 // src/services/assignment-request.service.ts
 import mongoose11 from "mongoose";
 
 // src/models/assignment-request.model.ts
 import mongoose10, { Schema as Schema7 } from "mongoose";
-var AssignmentRequestSchema = new Schema7(
+var AssignmentRequestSchema2 = new Schema7(
   {
     taskId: {
       type: Schema7.Types.ObjectId,
@@ -1418,8 +1580,8 @@ var AssignmentRequestSchema = new Schema7(
     }
   }
 );
-AssignmentRequestSchema.index({ taskId: 1, requesterId: 1, status: 1 });
-var AssignmentRequestModel = mongoose10.model("AssignmentRequest", AssignmentRequestSchema);
+AssignmentRequestSchema2.index({ taskId: 1, requesterId: 1, status: 1 });
+var AssignmentRequestModel = mongoose10.model("AssignmentRequest", AssignmentRequestSchema2);
 
 // src/services/assignment-request.service.ts
 init_task_model();
@@ -1820,7 +1982,6 @@ var ProjectController = class {
 };
 
 // src/routes/project.routes.ts
-import { CreateProjectSchema, UpdateProjectSchema } from "@taskly/shared-types";
 var router4 = Router4();
 router4.use(requireAuth);
 router4.get("/", ProjectController.getProjects);
@@ -1990,7 +2151,6 @@ var AdminController = class {
 };
 
 // src/routes/admin.routes.ts
-import { AdminInviteSchema } from "@taskly/shared-types";
 var requireAdmin = (req, res, next) => {
   if (req.user?.role !== "admin") {
     return next(new AppError(403, "Administrator access required"));
@@ -2312,13 +2472,7 @@ var errorHandler = (err, req, res, _next) => {
 // src/app.ts
 var createApp = () => {
   const app = express();
-  app.use(helmet());
-  if (env.NODE_ENV !== "test") {
-    app.use(morgan(env.NODE_ENV === "development" ? "dev" : "combined"));
-  }
-  app.use(cookieParser());
-  app.use(express.json({ limit: "10mb" }));
-  app.use(express.urlencoded({ extended: true }));
+  app.set("trust proxy", 1);
   const allowedOrigins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
@@ -2328,7 +2482,7 @@ var createApp = () => {
     cors({
       origin: (origin, callback) => {
         if (!origin) return callback(null, true);
-        if (allowedOrigins.includes(origin) || origin.endsWith(".vercel.app") || env.NODE_ENV === "development") {
+        if (allowedOrigins.includes(origin) || origin.endsWith(".vercel.app") || origin.includes("localhost") || env.NODE_ENV === "development") {
           callback(null, true);
         } else {
           callback(new AppError(403, `Origin ${origin} not allowed by CORS`));
@@ -2336,10 +2490,33 @@ var createApp = () => {
       },
       credentials: true,
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
+      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
     })
   );
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: "cross-origin" }
+    })
+  );
+  if (env.NODE_ENV !== "test") {
+    app.use(morgan(env.NODE_ENV === "development" ? "dev" : "combined"));
+  }
+  app.use(cookieParser());
+  app.use(express.json({ limit: "10mb" }));
+  app.use(express.urlencoded({ extended: true }));
+  app.get("/", (_req, res) => {
+    res.status(200).json({
+      name: "Taskly API",
+      status: "healthy",
+      version: "1.0.0",
+      timestamp: (/* @__PURE__ */ new Date()).toISOString()
+    });
+  });
+  app.get("/health", (_req, res) => {
+    res.status(200).json({ status: "ok", timestamp: (/* @__PURE__ */ new Date()).toISOString() });
+  });
   app.use("/api", routes_default);
+  app.use("/", routes_default);
   app.all("*", (req, _res, next) => {
     next(new AppError(404, `Cannot find ${req.method} ${req.originalUrl} on this server`));
   });
