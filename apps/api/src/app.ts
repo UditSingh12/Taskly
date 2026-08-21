@@ -1,4 +1,4 @@
-import express, { Express } from 'express';
+import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -59,7 +59,7 @@ export const createApp = (): Express => {
   app.use('/api', routes);
 
   // Handle 404
-  app.all('*', (req: express.Request, _res: express.Response, next: express.NextFunction) => {
+  app.all('*', (req: Request, _res: Response, next: NextFunction) => {
     next(new AppError(404, `Cannot find ${req.method} ${req.originalUrl} on this server`));
   });
 
