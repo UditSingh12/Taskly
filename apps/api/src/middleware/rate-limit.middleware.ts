@@ -18,7 +18,7 @@ export const requestAssignmentLimiter = rateLimit({
 
 export const aiParserLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 20, // Limit each IP to 20 requests per hour
+  max: 100, // Limit each IP to 100 requests per hour
   message: { error: { message: 'AI task parsing limit reached for this hour.', statusCode: 429 } },
   standardHeaders: true,
   legacyHeaders: false,
